@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>ACHB RFQ Estimate — Changelog</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Arial,Helvetica,sans-serif;font-size:10pt;background:#07101D;color:#B8D0E8;}
+.page{max-width:860px;margin:40px auto;background:#0D1A2A;border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,.5);overflow:hidden;}
+.page-hdr{background:#0A1520;border-bottom:1px solid #1C3050;padding:28px 36px;display:flex;align-items:center;gap:20px;}
+.hdr-text h1{font-size:18pt;font-weight:700;letter-spacing:1px;color:#DFF0FF;}
+.hdr-text p{font-size:9.5pt;color:#507090;margin-top:4px;}
+.body{padding:32px 36px;}
+
+.version-block{margin-bottom:32px;}
+.version-tag{
+  display:inline-flex;align-items:center;gap:10px;
+  background:#132030;color:#DFF0FF;border:1px solid #1C3050;
+  padding:7px 18px;border-radius:20px;
+  font-size:11pt;font-weight:700;letter-spacing:.5px;
+  margin-bottom:14px;
+}
+.version-tag .date{font-size:8.5pt;color:#507090;font-weight:400;}
+.version-tag.latest{background:rgba(14,165,233,.18);border-color:rgba(14,165,233,.4);color:#0EA5E9;}
+
+.change-list{list-style:none;padding-left:0;}
+.change-item{
+  display:flex;gap:12px;align-items:flex-start;
+  padding:9px 14px;border-radius:5px;margin-bottom:6px;
+  background:#132030;border-left:3px solid #1C3050;
+  font-size:10pt;line-height:1.6;color:#B8D0E8;
+}
+.change-item.fix{border-left-color:#F59E0B;}
+.change-item.feat{border-left-color:#10D9A0;}
+.tag{
+  flex-shrink:0;font-size:7.5pt;font-weight:700;letter-spacing:.5px;
+  padding:2px 8px;border-radius:10px;margin-top:2px;
+}
+.tag-fix{background:rgba(245,158,11,.15);color:#F59E0B;}
+.tag-feat{background:rgba(16,217,160,.12);color:#10D9A0;}
+.tag-chg{background:rgba(14,165,233,.12);color:#0EA5E9;}
+
+hr.divider{border:none;border-top:1px solid #1C3050;margin:28px 0;}
+code{background:#132030;border:1px solid #1C3050;padding:1px 6px;border-radius:3px;font-size:9pt;color:#0EA5E9;font-family:Consolas,'Courier New',monospace;}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="page-hdr">
+    <svg width="44" height="52" viewBox="0 0 167 195" xmlns="http://www.w3.org/2000/svg" fill="none">
+      <path d="M43.5757 64.5779H10.5328L0 87.7135H33.5846L43.5757 64.5779Z" fill="#0EA5E9"/>
+      <path d="M33.5461 87.7134L9.63165 142.415H46.6068L59.6073 111.166H112.853L125.412 142.415H167.002L105.811 0H71.7049L43.5773 64.5778H78.165L86.8922 43.4213L104.046 87.7134H33.5461Z" fill="#0EA5E9"/>
+      <path d="M30.4147 194.189L29.2511 190.527H20.0424L18.8788 194.189H9.89081L20.0023 168.104H29.5119L39.4027 194.189H30.4147ZM24.717 175.526L21.848 184.729H27.5257L24.717 175.526Z" fill="#0EA5E9"/>
+      <path d="M78.6649 190.567C77.1001 192.348 73.7095 195 67.8312 195C64.4607 195 61.4714 194.189 58.8833 192.012C54.4696 188.35 54.1285 183.145 54.1285 181.305C54.1285 179.722 54.3292 176.1 56.8771 172.577C60.5084 167.511 65.5641 167.154 67.8914 167.154C73.9101 167.154 77.5013 170.261 78.9659 171.924C79.7483 172.815 80.1295 173.428 80.6913 174.437L73.6894 177.861C73.5691 177.604 73.4286 177.347 73.3283 177.089C72.8669 176.199 71.5628 173.507 68.1923 173.547C66.6475 173.547 65.6845 174.101 65.1629 174.477C62.5347 176.397 62.6551 180.157 62.6551 180.83C62.6551 184.412 63.8187 186.332 65.0826 187.321C66.4068 188.331 67.5905 188.35 68.2325 188.35C71.1215 188.35 72.4656 186.431 72.9873 185.54C73.1678 185.164 73.3283 184.847 73.5891 184.076L80.7514 187.46C79.8085 189.162 79.327 189.835 78.685 190.567H78.6649Z" fill="#0EA5E9"/>
+      <path d="M114.155 194.189V184.135H106.171V194.189H97.8246V168.104H106.171V177.604H114.155V168.104H122.582V194.189H114.155Z" fill="#0EA5E9"/>
+    </svg>
+    <div class="hdr-text">
+      <h1>ACHB RFQ Estimate — Changelog</h1>
+      <p>版本更新紀錄 / RFQ 製程估價系統</p>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- V3.0 -->
+    <div class="version-block">
+      <div class="version-tag latest">V3.0 <span class="date">2026-05-25</span></div>
+      <ul class="change-list">
+        <li class="change-item feat">
+          <span class="tag tag-feat">FEAT</span>
+          <div><strong>多工件 Tab 系統</strong>：單工件模式新增工件列表 Tab Bar，同一張 RFQ 可開啟多個工件 Tab 獨立估算，共用匯率 / 毛利 / 數量級距設定。Tab 標籤自動帶入 Part No。</div>
+        </li>
+        <li class="change-item feat">
+          <span class="tag tag-feat">FEAT</span>
+          <div><strong>各工件售價總覽</strong>：開啟多個工件時，右側結果面板底部自動顯示所有工件在各數量級距下的建議售價對照表（Multi-Part USD/pc Summary）。</div>
+        </li>
+        <li class="change-item feat">
+          <span class="tag tag-feat">FEAT</span>
+          <div><strong>Excel 多工件匯出</strong>：多 Tab 時，匯出 Excel 為每個有製程的工件建立獨立 Sheet，並額外生成「總覽 Summary」工作表彙總各工件跨級距售價。</div>
+        </li>
+        <li class="change-item">
+          <span class="tag tag-chg">CHG</span>
+          <div><strong>State 架構重構</strong>：全域參數（匯率 / 毛利 / 數量級距）獨立為 <code>G</code> 物件；每個工件的料號、材料、製程、外購料、一次性費用各自存在 Tab State，切換 Tab 時完整還原。</div>
+        </li>
+        <li class="change-item">
+          <span class="tag tag-chg">CHG</span>
+          <div><strong>儲存格式升版 v2</strong>：JSON 儲存格式升至 version:2，包含完整 <code>TABS</code> 陣列與 <code>G</code> 全域設定；向下相容 v1 舊檔（自動轉換為單 Tab）。</div>
+        </li>
+        <li class="change-item fix">
+          <span class="tag tag-fix">FIX</span>
+          <div>一次性費用（刀具 / 治具 / 模具 / 其他）改為 per-Tab 儲存，切換工件時正確還原各工件的獨立費用設定。</div>
+        </li>
+      </ul>
+    </div>
+
+    <hr class="divider">
+
+    <!-- V2.0 -->
+    <div class="version-block">
+      <div class="version-tag">V2.0 <span class="date">初版發布</span></div>
+      <ul class="change-list">
+        <li class="change-item">
+          <span class="tag tag-chg">FEAT</span>
+          <div>雙模式估價：單工件（Standard）與組合件（Assembly）切換</div>
+        </li>
+        <li class="change-item">
+          <span class="tag tag-chg">FEAT</span>
+          <div>機台費率資料庫：走心、走刀、MC 加工中心、研磨、廠內後製程共 34 台</div>
+        </li>
+        <li class="change-item">
+          <span class="tag tag-chg">FEAT</span>
+          <div>材料 / 製程 / 外購物料數量級距報價，含攤提與固定/件兩種計算方式</div>
+        </li>
+        <li class="change-item">
+          <span class="tag tag-chg">FEAT</span>
+          <div>右側即時結果面板：成本結構圖、各級距售價總覽、建議 USD 售價</div>
+        </li>
+        <li class="change-item">
+          <span class="tag tag-chg">FEAT</span>
+          <div>難度/毛利五級 + 自訂，佣金 Toggle (+5%)</div>
+        </li>
+        <li class="change-item">
+          <span class="tag tag-chg">FEAT</span>
+          <div>JSON 儲存 / 載入，跨工作階段還原所有欄位</div>
+        </li>
+        <li class="change-item">
+          <span class="tag tag-chg">FEAT</span>
+          <div>Excel 匯出：含製程明細、材料成本、外購料、各級距報價結果（SheetJS）</div>
+        </li>
+        <li class="change-item">
+          <span class="tag tag-chg">FEAT</span>
+          <div>客戶資料庫：34 家客戶名稱與代碼，選取後自動帶入代碼徽章</div>
+        </li>
+        <li class="change-item">
+          <span class="tag tag-chg">FEAT</span>
+          <div>RFQ 單號自動生成（日期＋流水號），可手動覆蓋</div>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

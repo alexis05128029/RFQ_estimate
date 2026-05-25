@@ -174,11 +174,11 @@ footer{margin-top:60px;padding:24px 40px;background:var(--grey-lt);border-top:1p
 <div class="cover">
   <div class="cover-badge">SOP — Standard Operating Procedure</div>
   <h1><strong>ACHB RFQ 估價系統</strong>標準作業程序</h1>
-  <p class="cover-sub">適用工具：rfq-estimate.html（互動式報價工具）</p>
+  <p class="cover-sub">適用工具：rfq-estimate V3.0.html（互動式報價工具）</p>
   <div class="cover-meta">
-    <span><strong>文件版次</strong> v1.0</span>
-    <span><strong>發布日期</strong> 2026-05-24</span>
-    <span><strong>工具版本</strong> v2.0</span>
+    <span><strong>文件版次</strong> v2.0</span>
+    <span><strong>發布日期</strong> 2026-05-25</span>
+    <span><strong>工具版本</strong> v3.0</span>
     <span><strong>適用部門</strong> 業務 / 工程估價</span>
   </div>
 </div>
@@ -197,6 +197,7 @@ footer{margin-top:60px;padding:24px 40px;background:var(--grey-lt);border-top:1p
     <li>
       <a href="#single-mode">單工件模式（Standard）</a>
       <ol class="sub">
+        <li><a href="#multi-tab">同張 RFQ 多工件評估（V3.0 新增）</a></li>
         <li><a href="#material-cost">材料成本</a></li>
         <li><a href="#process-routing">製程途層</a></li>
         <li><a href="#purchased-parts">外購物料</a></li>
@@ -413,7 +414,54 @@ footer{margin-top:60px;padding:24px 40px;background:var(--grey-lt);border-top:1p
 <div class="section" id="single-mode">
   <h2>6. 單工件模式操作流程</h2>
 
-  <p>確認頂部 Mode 切換為「<strong>單工件</strong>」（預設）。依序填入以下四個區塊。</p>
+  <p>確認頂部 Mode 切換為「<strong>單工件</strong>」（預設）。依序填入以下區塊。</p>
+
+  <!-- 6.0 Multi-tab (V3.0) -->
+  <h3 id="multi-tab">6.0 同張 RFQ 多工件評估 <span class="tag tag-blue">V3.0 新增</span></h3>
+
+  <p>當客戶在同一張 RFQ 中詢問多個料號時，可在單工件模式下開啟多個工件 tab，每個 tab 獨立估算成本，共用同一份匯率、毛利設定與數量級距。</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h4>新增工件 Tab</h4>
+        <p>頁面最上方「工件列表」列中，點「<strong>＋ 新增工件</strong>」即可新增一個工件 tab。預設顯示 Part 1、Part 2… 待填入料號後，tab 標籤會自動更新為該料號。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h4>切換工件</h4>
+        <p>點擊 tab 按鈕即可切換至該工件的輸入欄位，右側結果面板同步更新為該工件的估價結果。<br>每個工件各自有獨立的：料號、材料、製程、外購物料、一次性費用。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h4>查看各工件總覽</h4>
+        <p>右側結果面板底部會顯示「<strong>各工件售價總覽</strong>」表，列出所有工件在各數量級距下的建議售價（USD/pc），方便一次比較。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h4>刪除工件</h4>
+        <p>點 tab 按鈕上的「×」即可刪除該工件（至少保留一個 tab，無法刪至 0）。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <h4>匯出 Excel</h4>
+        <p>多工件時，點「⊞ 匯出 Excel」會為每個有填製程的工件建立獨立工作表，並額外生成「總覽 Summary」工作表，顯示所有工件的跨級距售價。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout callout-blue">
+    <strong>共用設定</strong>：匯率、難度/毛利、佣金、數量級距為所有工件共用。RFQ 單號與客戶名稱也是共用欄位，請在切換 tab 前先填好。
+  </div>
 
   <!-- 6.1 Material -->
   <h3 id="material-cost">6.1 材料成本</h3>
@@ -824,7 +872,7 @@ footer{margin-top:60px;padding:24px 40px;background:var(--grey-lt);border-top:1p
 </div><!-- end .wrapper -->
 
 <footer>
-  ACHB RFQ 估價系統 SOP &nbsp;|&nbsp; v1.0 &nbsp;|&nbsp; 2026-05-24 &nbsp;|&nbsp; 僅供內部使用
+  ACHB RFQ 估價系統 SOP &nbsp;|&nbsp; v2.0 &nbsp;|&nbsp; 2026-05-25 &nbsp;|&nbsp; 僅供內部使用
 </footer>
 
 </body>
