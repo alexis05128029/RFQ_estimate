@@ -62,9 +62,70 @@ code{background:#132030;border:1px solid #1C3050;padding:1px 6px;border-radius:3
 
   <div class="body">
 
+    <!-- V3.2 -->
+    <div class="version-block">
+      <div class="version-tag latest">V3.2 <span class="date">2026-05-27</span></div>
+      <ul class="change-list">
+        <li class="change-item">
+          <span class="tag tag-chg">CHG</span>
+          <div><strong>機台費率全面更新（2026-05-27）</strong>：依最新估價成本計算表同步所有 34 台機台的加工費率（<code>perMin</code>）與設定費（<code>setupHrUSD</code> / <code>setupDayUSD</code>）。主要調整如下：</div>
+        </li>
+        <li class="change-item" style="border-left-color:#1C3050;background:#0f1e30;">
+          <span class="tag tag-chg" style="visibility:hidden;">CHG</span>
+          <div style="font-size:9.5pt;color:#8aabcc;line-height:1.8;">
+            走心 CNC1–8：<code>10.5 → 7.35 NT$/min</code>，設定費 <code>45 → 31.5 USD/hr</code><br>
+            走心 CNC9 / 18：<code>12 → 8.4 NT$/min</code>，設定費 <code>50 → 35 USD/hr</code><br>
+            走心 CNC10 / 20：<code>11 → 7.7 NT$/min</code>，設定費 <code>45 → 31.5 USD/hr</code><br>
+            走心 CNC21 / 走刀 CNC14 / 19 / 22：<code>15 → 10.5 NT$/min</code>，設定費 <code>50 → 35 USD/hr</code><br>
+            MC 加工鋁：<code>11 → 7.7</code>；MC 加工白鐵：<code>12 → 8.4</code>；MC 塑膠+硬度高：<code>15 → 10.5</code><br>
+            臥式：<code>16 → 11.2 NT$/min</code>，設定費 <code>50 → 35 USD/hr</code>，設定費-天改為 0<br>
+            研磨（圓筒/拋光/無心）：<code>15 → 10.5</code>，設定費新增 <code>31.5 USD/hr</code><br>
+            研磨（大平磨）：<code>15 → 10.5</code>，設定費新增 <code>17.5 USD/hr</code><br>
+            廠內整直：<code>15 → 10.5 NT$/min</code><br>
+            雷刻：<code>10 → 7 NT$/min</code>，設定費新增 <code>21 USD/hr</code><br>
+            桌上車床 / 去毛邊：<code>7 → 4.9 NT$/min</code><br>
+            組裝（無塵室）：<code>15 → 10.5</code>，設定費新增 <code>21 USD/hr</code><br>
+            滾牙：<code>20 → 14 NT$/min</code>，設定費新增 <code>21 USD/hr</code><br>
+            噴漆/移印：<code>10 → 7 NT$/min</code>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <hr class="divider">
+
+    <!-- V3.1 -->
+    <div class="version-block">
+      <div class="version-tag">V3.1 <span class="date">2026-05-27</span></div>
+      <ul class="change-list">
+        <li class="change-item feat">
+          <span class="tag tag-feat">FEAT</span>
+          <div><strong>各數量級距獨立毛利率設定</strong>：每個數量 Tag 內新增「毛利」輸入欄，可為不同級距設定不同毛利率；空白時自動沿用全域設定。覆蓋中的 Tag 以紫色高亮顯示以作區分。</div>
+        </li>
+        <li class="change-item">
+          <span class="tag tag-chg">CHG</span>
+          <div><strong>毛利率 UI 重新設計</strong>：從單一 inline 小輸入框改為帶有「毛利」標籤的圓角膠囊樣式，可讀性更高；自訂狀態時顏色切換為紫色 (<code>#a78bfa</code>) 提示視覺差異。</div>
+        </li>
+        <li class="change-item">
+          <span class="tag tag-chg">CHG</span>
+          <div><strong>全域毛利選單整合至數量級距卡片</strong>：將頂端工具列的「難度/毛利」下拉移入「數量級距」卡片標題列，與各 Tier 毛利設定同處一處，改善操作連貫性。</div>
+        </li>
+        <li class="change-item">
+          <span class="tag tag-chg">CHG</span>
+          <div><strong>各級距售價總覽新增毛利欄位</strong>：All-Tier Summary 表格加入「毛利」欄，自訂毛利的列以紫色徽章標示，便於一眼識別非標準毛利的報價。</div>
+        </li>
+        <li class="change-item">
+          <span class="tag tag-chg">CHG</span>
+          <div><strong>JSON 儲存格式升版 v3</strong>：新增 <code>G.qtyMargins</code> 物件至序列化欄位；讀取舊版 v2 / v1 檔案時自動補全 <code>qtyMargins: {}</code>，向下相容不中斷。</div>
+        </li>
+      </ul>
+    </div>
+
+    <hr class="divider">
+
     <!-- V3.0 -->
     <div class="version-block">
-      <div class="version-tag latest">V3.0 <span class="date">2026-05-25</span></div>
+      <div class="version-tag">V3.0 <span class="date">2026-05-25</span></div>
       <ul class="change-list">
         <li class="change-item feat">
           <span class="tag tag-feat">FEAT</span>
