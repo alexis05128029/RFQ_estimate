@@ -1281,15 +1281,12 @@ function calcAssemblySet(qty) {
   for (const wp of A.workpieces) {
     const N = wp.qtyPerUnit || 1;
     const pieceQty = qty * N;
-    const isOutsourced = wp.procs.some(p => p.type === 'outsource');
-    if (!isOutsourced) {
-      const matSetupQty = wp.matSetupQty || 0;
-      const matUnitPrice = getTierPrice(wp.matTiers, qty);
-      const matPerPc = (matSetupQty > 0 && pieceQty > 0)
-        ? r2((pieceQty + matSetupQty) * matUnitPrice / pieceQty)
-        : matUnitPrice;
-      matPerSet += matPerPc * N;
-    }
+    const matSetupQty = wp.matSetupQty || 0;
+    const matUnitPrice = getTierPrice(wp.matTiers, qty);
+    const matPerPc = (matSetupQty > 0 && pieceQty > 0)
+      ? r2((pieceQty + matSetupQty) * matUnitPrice / pieceQty)
+      : matUnitPrice;
+    matPerSet += matPerPc * N;
     for (const proc of wp.procs) {
       if (proc.type === 'inhouse') {
         const m = MACH_MAP[proc.machId];
@@ -1607,16 +1604,63 @@ function buildTabRows(tab, qtys, rfqNo, cu, er, modeStr, diffLbl, today) {
   return rows;
 }
 
+function buildAssemblyRows(qtys, rfqNo, cu, er, diffLbl, today) {
+  const rows = [];
+  const h = s => [s];
+  rows.push(['ACHB RFQ 組合件估價']);
+  rows.push([]);
+  rows.push(['RFQ No.', rfqNo||'—', '', '客戶', cu||'—']);
+  rows.push(['日期', today, '', '匯率', `NT$ ${er}`]);
+  rows.push(['毛利設定', diffLbl]);
+  rows.push([]);
+  rows.push(['=== 工件明細 ===']);
+  A.workpieces.forEach(wp => {
+    rows.push([]);
+    rows.push([`WP${wp.id} — ${wp.partNo||'(未填料號)'}`, `材料: ${wp.material||'—'}`, `每組用量: ${wp.qtyPerUnit||1} pcs/set`]);
+    if (wp.procs.length) {
+      rows.push(['  製程', '機台', '加工時間', 'NT$/pc']);
+      wp.procs.forEach((p, i) => {
+        const opN = `  OP${String(i+1).padStart(2,'0')}`;
+        if (p.type === 'inhouse') {
+          const m = MACH_MAP[p.machId];
+          rows.push([opN, m?m.label:'—', `${p.timeMin||0} min/pc`, m?`NT$${((p.timeMin||0)*m.perMin).toFixed(1)}/pc`:'—']);
+        } else {
+          const tierStr = (p.tiers||[]).map(t=>`${t.qty?t.qty+'pcs':'>0'}: NT$${t.price}`).join(' / ');
+          rows.push([opN, '廠外委外', '級距報價', tierStr]);
+        }
+      });
+    } else {
+      rows.push(['  (無製程)']);
+    }
+    const matStr = (wp.matTiers||[]).filter(t=>t.price>0).map(t=>t.qty?`${t.qty}pcs: NT$${t.price}`:`固定: NT$${t.price}`).join(' / ');
+    if (matStr) rows.push(['  材料成本', matStr]);
+  });
+  rows.push([]);
+  rows.push(['=== 各級距報價彙總 ===']);
+  rows.push([]);
+  rows.push(['數量(sets)','材料(NT)','廠內加工(NT)','廠外製程(NT)','外購物料(NT)','設定+攤提(NT)','一次費(NT)','成本合計(NT)','毛利率','售價 USD/set','訂單金額 USD']);
+  qtys.forEach(q => {
+    const r = calcAssemblySet(q);
+    rows.push([q, r.mat, r.inhouse, r.outsource, r.pur, r.setup, r2(r.ot||0), r.total,
+      `${(r.margin*100).toFixed(1)}%`, r.priceUSD.toFixed(2), r.orderValUSD.toFixed(2)]);
+  });
+  return rows;
+}
+
 function exportExcel() {
   if (typeof XLSX === 'undefined') {
     alert('Excel 匯出功能需要網路連線以載入 SheetJS 程式庫，請確認網路後重試。');
     return;
   }
   const qtys = [...G.qtys].sort((a,b)=>a-b);
-  const filledTabs = MODE==='single' ? TABS.filter(t=>t.procs.length>0) : [];
-  if (!qtys.length || !filledTabs.length) {
-    alert('請先輸入製程資料與數量級距再匯出。');
-    return;
+  if (!qtys.length) { alert('請先設定數量級距再匯出。'); return; }
+
+  if (MODE === 'assembly') {
+    const hasProcs = A.workpieces.some(w=>w.procs.length>0);
+    if (!hasProcs) { alert('請先為工件新增製程步驟再匯出。'); return; }
+  } else {
+    const filledTabs = TABS.filter(t=>t.procs.length>0);
+    if (!filledTabs.length) { alert('請先輸入製程資料再匯出。'); return; }
   }
 
   const rfqNo  = document.getElementById('rfqNo').value.trim();
@@ -1626,31 +1670,39 @@ function exportExcel() {
   const diffEl  = document.getElementById('difficulty');
   const diffLbl = diffEl.value==='custom' ? `自訂 ${document.getElementById('customMargin').value}%` : diffEl.options[diffEl.selectedIndex].text;
   const today  = new Date().toLocaleDateString('zh-TW');
-  const colWidths = [{wch:28},{wch:18},{wch:22},{wch:14},{wch:14},{wch:14},{wch:14},{wch:26},{wch:16},{wch:36}];
-
   const wb = XLSX.utils.book_new();
-  filledTabs.forEach(tab => {
-    const rows = buildTabRows(tab, qtys, rfqNo, cu, er, modeStr, diffLbl, today);
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = colWidths;
-    const sheetName = (tab.partNo||`Part ${tab.id}`).substring(0,31);
-    XLSX.utils.book_append_sheet(wb, ws, sheetName);
-  });
-
-  if (filledTabs.length > 1) {
-    const sumRows = [['ACHB RFQ 多工件售價總覽'],['匯出日期: '+today],[],
-      ['工件','Part No.',...qtys.map(q=>`售價 USD @${q}pc`)]];
-    filledTabs.forEach(tab=>{
-      sumRows.push([tabLabel(tab), tab.partNo||'—', ...qtys.map(q=>calcQty(q,tab).priceUSD.toFixed(2))]);
-    });
-    const ws2 = XLSX.utils.aoa_to_sheet(sumRows);
-    ws2['!cols'] = [{wch:18},{wch:22},...qtys.map(()=>({wch:16}))];
-    XLSX.utils.book_append_sheet(wb, ws2, '總覽 Summary');
-  }
-
   const san = s => s.replace(/[\\/:*?"<>|\s]/g,'_');
-  const fname = ([rfqNo, cu].filter(Boolean).map(san).join('_')||'RFQ_quote')+'.xlsx';
-  XLSX.writeFile(wb, fname);
+
+  if (MODE === 'assembly') {
+    const asmRows = buildAssemblyRows(qtys, rfqNo, cu, er, diffLbl, today);
+    const ws = XLSX.utils.aoa_to_sheet(asmRows);
+    ws['!cols'] = [{wch:16},{wch:14},{wch:16},{wch:16},{wch:14},{wch:16},{wch:14},{wch:16},{wch:10},{wch:16},{wch:16}];
+    XLSX.utils.book_append_sheet(wb, ws, '組合件 Assembly');
+    const fname = ([rfqNo, cu, 'Assembly'].filter(Boolean).map(san).join('_')||'RFQ_Assembly')+'.xlsx';
+    XLSX.writeFile(wb, fname);
+  } else {
+    const filledTabs = TABS.filter(t=>t.procs.length>0);
+    const colWidths = [{wch:28},{wch:18},{wch:22},{wch:14},{wch:14},{wch:14},{wch:14},{wch:26},{wch:16},{wch:36}];
+    filledTabs.forEach(tab => {
+      const rows = buildTabRows(tab, qtys, rfqNo, cu, er, modeStr, diffLbl, today);
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = colWidths;
+      const sheetName = (tab.partNo||`Part ${tab.id}`).substring(0,31);
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    });
+    if (filledTabs.length > 1) {
+      const sumRows = [['ACHB RFQ 多工件售價總覽'],['匯出日期: '+today],[],
+        ['工件','Part No.',...qtys.map(q=>`售價 USD @${q}pc`)]];
+      filledTabs.forEach(tab=>{
+        sumRows.push([tabLabel(tab), tab.partNo||'—', ...qtys.map(q=>calcQty(q,tab).priceUSD.toFixed(2))]);
+      });
+      const ws2 = XLSX.utils.aoa_to_sheet(sumRows);
+      ws2['!cols'] = [{wch:18},{wch:22},...qtys.map(()=>({wch:16}))];
+      XLSX.utils.book_append_sheet(wb, ws2, '總覽 Summary');
+    }
+    const fname = ([rfqNo, cu].filter(Boolean).map(san).join('_')||'RFQ_quote')+'.xlsx';
+    XLSX.writeFile(wb, fname);
+  }
 }
 
 // ══════════════════════════════════════════════════════
