@@ -62,9 +62,26 @@ code{background:#132030;border:1px solid #1C3050;padding:1px 6px;border-radius:3
 
   <div class="body">
 
+    <!-- V3.3 -->
+    <div class="version-block">
+      <div class="version-tag latest">V3.3 <span class="date">2026-05-27</span></div>
+      <ul class="change-list">
+        <li class="change-item fix">
+          <span class="tag tag-fix">FIX</span>
+          <div><strong>組合件模式：材料成本計算錯誤</strong>：當工件同時包含廠內加工與廠外製程時，材料成本會顯示 NT$0。原因是 <code>calcAssemblySet()</code> 中有一個 <code>isOutsourced</code> 判斷，只要工件含任何廠外製程就跳過材料成本計算。現已移除此判斷，無論製程組合為何，材料成本皆正確計算。</div>
+        </li>
+        <li class="change-item fix">
+          <span class="tag tag-fix">FIX</span>
+          <div><strong>組合件模式：Excel 匯出功能異常</strong>：在組合件模式下點選「匯出 Excel」會直接彈出「請先輸入製程資料」的錯誤提示。原因是 <code>exportExcel()</code> 沿用單件模式的 <code>TABS</code> 判斷邏輯，在組合件模式下永遠回傳空陣列。現已新增 <code>buildAssemblyRows()</code> 函式，並將匯出邏輯依模式分流；組合件模式會輸出含工件明細與各級距報價彙總的單一 Sheet。</div>
+        </li>
+      </ul>
+    </div>
+
+    <hr class="divider">
+
     <!-- V3.2 -->
     <div class="version-block">
-      <div class="version-tag latest">V3.2 <span class="date">2026-05-27</span></div>
+      <div class="version-tag">V3.2 <span class="date">2026-05-27</span></div>
       <ul class="change-list">
         <li class="change-item">
           <span class="tag tag-chg">CHG</span>

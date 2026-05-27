@@ -1,0 +1,1915 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACHB RFQ 製程估價系統</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Rajdhani:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07101D;--surf:#0D1A2A;--surf2:#132030;--surf3:#1A2D42;
+  --bdr:#1C3050;--bdr2:#233A58;
+  --acc:#0EA5E9;--acc-dim:rgba(14,165,233,.13);--acc-glow:rgba(14,165,233,.28);
+  --grn:#10D9A0;--grn-dim:rgba(16,217,160,.10);--grn-bdr:rgba(16,217,160,.28);
+  --pur:#A78BFA;--pur-dim:rgba(167,139,250,.10);--pur-bdr:rgba(167,139,250,.28);
+  --amb:#F59E0B;--amb-dim:rgba(245,158,11,.10);
+  --red:#F87171;--red-dim:rgba(248,113,113,.10);
+  --tx:#B8D0E8;--tx2:#507090;--tx3:#2C4A68;--txbr:#DFF0FF;
+  --ff:'IBM Plex Sans','Noto Sans TC',sans-serif;
+  --ffm:'IBM Plex Mono',monospace;
+  --ffd:'Rajdhani',sans-serif;
+  --r:8px;--rs:5px;--rx:3px;
+  --tbh:56px;--tr:all .16s ease;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--ff);font-size:13px;background:var(--bg);color:var(--tx);min-height:100vh;line-height:1.5;}
+
+/* ── TOP BAR ── */
+#topbar{
+  background:var(--surf);border-bottom:1px solid var(--bdr);
+  padding:0 18px;display:flex;align-items:center;
+  position:sticky;top:0;z-index:200;
+  height:var(--tbh);box-shadow:0 4px 24px rgba(0,0,0,.55);
+}
+.tb-brand{display:flex;align-items:center;gap:14px;padding-right:18px;border-right:1px solid var(--bdr);flex-shrink:0;height:100%;}
+.tb-logo{font-family:var(--ffd);font-size:22px;font-weight:700;color:var(--acc);letter-spacing:2px;line-height:1;text-shadow:0 0 18px var(--acc-glow);}
+.tb-subtitle{font-size:8.5px;font-weight:600;color:var(--tx3);letter-spacing:2px;text-transform:uppercase;margin-top:3px;}
+
+.mode-seg{display:flex;background:var(--bg);border:1px solid var(--bdr);border-radius:var(--rs);overflow:hidden;flex-shrink:0;padding:2px;gap:2px;}
+.mode-seg button{padding:4px 15px;border:none;background:transparent;color:var(--tx3);cursor:pointer;font-size:11.5px;font-weight:700;font-family:var(--ff);border-radius:var(--rx);transition:var(--tr);white-space:nowrap;}
+.mode-seg button.active{background:var(--acc);color:#000;}
+.mode-seg button:hover:not(.active){background:var(--surf3);color:var(--tx);}
+
+.tb-controls{display:flex;align-items:stretch;flex:1;overflow-x:auto;overflow-y:hidden;}
+.tb-controls::-webkit-scrollbar{display:none;}
+.ctrl-grp{display:flex;flex-direction:column;justify-content:center;gap:2px;padding:0 15px;border-right:1px solid var(--bdr);flex-shrink:0;}
+.ctrl-lbl{font-size:8.5px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;}
+.ctrl-inner{display:flex;align-items:center;gap:6px;}
+.ctrl-grp input,.ctrl-grp select{background:var(--surf2);border:1px solid var(--bdr2);color:var(--tx);padding:4px 8px;border-radius:var(--rx);font-size:12px;font-family:var(--ff);transition:border-color .15s;}
+.ctrl-grp input:focus,.ctrl-grp select:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 2px var(--acc-dim);}
+.ctrl-grp select option{background:var(--surf);}
+.ctrl-grp input{width:60px;font-family:var(--ffm);}
+.ctrl-unit{font-size:9.5px;color:var(--tx3);white-space:nowrap;}
+
+.comm-ctrl{display:flex;align-items:center;gap:8px;}
+.toggle-sw{position:relative;width:36px;height:20px;display:inline-block;flex-shrink:0;cursor:pointer;}
+.toggle-sw input{opacity:0;width:0;height:0;position:absolute;}
+.toggle-track{position:absolute;inset:0;background:var(--surf2);border:1px solid var(--bdr2);border-radius:10px;cursor:pointer;transition:all .22s;}
+.toggle-track::after{content:'';position:absolute;top:3px;left:3px;width:12px;height:12px;background:var(--tx3);border-radius:50%;transition:transform .22s,background .22s;}
+.toggle-sw input:checked + .toggle-track{background:var(--amb-dim);border-color:var(--amb);}
+.toggle-sw input:checked + .toggle-track::after{transform:translateX(16px);background:var(--amb);}
+.comm-pct{font-size:12px;font-weight:700;color:var(--tx3);transition:color .2s;font-family:var(--ffm);}
+.comm-ctrl:has(input:checked) .comm-pct{color:var(--amb);}
+
+.tb-actions{display:flex;align-items:center;gap:6px;padding-left:15px;border-left:1px solid var(--bdr);flex-shrink:0;}
+.tb-btn{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border:1px solid transparent;border-radius:var(--rx);cursor:pointer;font-size:11.5px;font-weight:600;font-family:var(--ff);transition:var(--tr);white-space:nowrap;height:30px;}
+.tb-btn:active{transform:scale(.95);}
+.tb-save{background:var(--acc-dim);border-color:rgba(14,165,233,.3);color:var(--acc);}
+.tb-save:hover{background:var(--acc);color:#000;border-color:var(--acc);}
+.tb-load{background:var(--surf2);border-color:var(--bdr2);color:var(--tx2);}
+.tb-load:hover{background:var(--surf3);color:var(--tx);}
+.tb-excel{background:var(--grn-dim);border-color:var(--grn-bdr);color:var(--grn);}
+.tb-excel:hover{background:var(--grn);color:#000;border-color:var(--grn);}
+.tb-reset{background:transparent;border-color:var(--bdr);color:var(--tx3);}
+.tb-reset:hover{background:var(--red-dim);border-color:var(--red);color:var(--red);}
+
+/* ── LAYOUT ── */
+#layout{display:flex;gap:14px;padding:14px;align-items:flex-start;max-width:1500px;margin:0 auto;}
+#inputs{flex:1;display:flex;flex-direction:column;gap:11px;min-width:0;}
+#sidebar{width:375px;flex-shrink:0;position:sticky;top:calc(var(--tbh) + 12px);}
+
+/* ── CARD ── */
+.card{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;}
+.card-hd{
+  background:var(--surf2);border-bottom:1px solid var(--bdr);
+  color:var(--txbr);padding:9px 15px;font-size:12px;font-weight:700;letter-spacing:.4px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:relative;
+}
+.card-hd::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc);}
+.card-hd .badge{background:var(--acc-dim);color:var(--acc);border:1px solid rgba(14,165,233,.28);padding:2px 10px;border-radius:12px;font-size:10px;font-weight:700;font-family:var(--ffm);}
+.card-bd{padding:13px 15px;}
+
+/* ── FORM ── */
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px 13px;}
+.ff{display:flex;flex-direction:column;gap:3px;}
+.ff label{font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;}
+.ff input,.ff select,.ff textarea{padding:6px 9px;border:1px solid var(--bdr2);border-radius:var(--rx);font-size:12.5px;font-family:var(--ff);color:var(--txbr);background:var(--surf2);transition:border-color .15s,box-shadow .15s;}
+.ff input:focus,.ff select:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 2px var(--acc-dim);}
+.ff select option{background:var(--surf);}
+
+/* ── QTY TAGS ── */
+.qty-wrap{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+.qty-tag{display:flex;align-items:center;gap:4px;background:var(--acc-dim);border:1px solid rgba(14,165,233,.28);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;color:var(--acc);font-family:var(--ffm);transition:var(--tr);}
+.qty-tag:hover{background:rgba(14,165,233,.22);}
+.qty-tag button{background:none;border:none;color:rgba(14,165,233,.45);cursor:pointer;font-size:14px;padding:0 0 0 2px;line-height:1;transition:color .15s;}
+.qty-tag button:hover{color:var(--red);}
+.qty-mgn-sec{display:inline-flex;align-items:center;gap:3px;background:rgba(0,0,0,.25);border:1px solid rgba(14,165,233,.25);border-radius:12px;padding:2px 8px;margin-left:6px;cursor:text;}
+.qty-mgn-sec:focus-within{border-color:rgba(14,165,233,.6);background:rgba(14,165,233,.1);}
+.qty-mgn-sec.custom{background:rgba(139,92,246,.18);border-color:rgba(139,92,246,.5);}
+.qty-mgn-lbl{font-size:9px;color:var(--tx3);font-weight:700;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;}
+.qty-mgn-sec.custom .qty-mgn-lbl{color:#a78bfa;}
+.qty-mgn-inp{width:38px;border:none;background:transparent;color:var(--acc);font-family:var(--ffm);font-size:13px;font-weight:700;text-align:center;padding:0;outline:none;}
+.qty-mgn-sec.custom .qty-mgn-inp{color:#a78bfa;}
+.qty-mgn-pct{font-size:11px;color:var(--tx3);font-weight:600;}
+.qty-mgn-sec.custom .qty-mgn-pct{color:#a78bfa;}
+.qty-mgn-inp::-webkit-outer-spin-button,.qty-mgn-inp::-webkit-inner-spin-button{-webkit-appearance:none;}
+.qty-mgn-inp[type=number]{-moz-appearance:textfield;}
+.mgn-badge.mgn-custom{background:rgba(139,92,246,.15);color:#a78bfa;border-color:rgba(139,92,246,.3);}
+.qty-add{display:flex;align-items:center;gap:6px;}
+.qty-add input{width:70px;padding:5px 9px;border:1px dashed var(--bdr2);border-radius:var(--rx);font-size:12px;text-align:center;background:var(--surf2);color:var(--tx);font-family:var(--ffm);}
+.qty-add input:focus{outline:none;border-color:var(--acc);border-style:solid;}
+.qty-add button{padding:5px 14px;background:var(--acc-dim);color:var(--acc);border:1px solid rgba(14,165,233,.3);border-radius:var(--rx);cursor:pointer;font-size:12px;font-weight:600;font-family:var(--ff);transition:var(--tr);}
+.qty-add button:hover{background:var(--acc);color:#000;}
+
+/* ── PART TABS ── */
+#tab-bar-card{position:sticky;top:var(--tbh);z-index:150;}
+.part-tabs-bar{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;align-items:center;padding-bottom:2px;}
+.part-tabs-bar::-webkit-scrollbar{height:4px;}
+.part-tabs-bar::-webkit-scrollbar-thumb{background:var(--bdr2);border-radius:2px;}
+.part-tab{display:inline-flex;align-items:center;gap:4px;padding:5px 14px;border-radius:20px;border:1px solid var(--bdr2);background:var(--surf2);color:var(--tx2);cursor:pointer;font-size:12px;font-weight:700;transition:var(--tr);font-family:var(--ffm);white-space:nowrap;flex-shrink:0;}
+.part-tab.active{background:var(--acc);color:#000;border-color:var(--acc);}
+.part-tab:hover:not(.active){background:var(--surf3);color:var(--tx);}
+.part-tab-del{background:none;border:none;cursor:pointer;color:rgba(0,0,0,.35);font-size:14px;padding:0;line-height:1;flex-shrink:0;}
+.part-tab.active .part-tab-del:hover{color:rgba(0,0,0,.8);}
+.part-tab:not(.active) .part-tab-del{color:var(--tx3);}
+.part-tab:not(.active) .part-tab-del:hover{color:var(--red);}
+.add-tab-btn{padding:5px 14px;border-radius:20px;border:1px dashed var(--bdr2);background:none;color:var(--acc);cursor:pointer;font-size:12px;font-weight:600;font-family:var(--ff);white-space:nowrap;flex-shrink:0;transition:var(--tr);}
+.add-tab-btn:hover{background:var(--acc-dim);border-style:solid;border-color:rgba(14,165,233,.4);}
+
+/* ── PROCESS LIST ── */
+.proc-list{display:flex;flex-direction:column;gap:8px;}
+.op-card{border:1px solid var(--bdr);border-radius:var(--rs);overflow:hidden;transition:border-color .2s;}
+.op-card.inhouse{border-left:3px solid var(--grn);}
+.op-card.outsource{border-left:3px solid var(--pur);}
+.op-hd{display:flex;align-items:center;gap:7px;background:var(--surf2);padding:7px 11px;cursor:pointer;user-select:none;}
+.op-hd:hover{background:var(--surf3);}
+.op-num{font-size:10.5px;font-weight:700;color:var(--tx3);min-width:35px;font-family:var(--ffm);}
+.type-sw{display:flex;background:var(--bg);border:1px solid var(--bdr);border-radius:var(--rx);overflow:hidden;padding:1px;gap:1px;}
+.type-sw button{padding:3px 10px;border:none;background:transparent;cursor:pointer;font-size:10.5px;font-weight:700;color:var(--tx3);transition:var(--tr);border-radius:2px;font-family:var(--ff);}
+.type-sw button.on-in{background:var(--grn);color:#000;}
+.type-sw button.on-out{background:var(--pur);color:#fff;}
+.op-sum{flex:1;font-size:11px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0 5px;}
+.op-del{background:none;border:none;color:var(--tx3);cursor:pointer;font-size:16px;line-height:1;padding:0 3px;transition:color .15s;}
+.op-del:hover{color:var(--red);}
+.op-arrow{font-size:10px;color:var(--tx3);transition:transform .15s;}
+.op-arrow.open{transform:rotate(180deg);}
+.op-bd{padding:11px 13px;background:var(--surf);border-top:1px solid var(--bdr);}
+.op-bd.collapsed{display:none;}
+
+.ih-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:9px;align-items:end;}
+@media(max-width:860px){.ih-grid{grid-template-columns:1fr 1fr;}}
+
+.purch-hdr,.purch-row{display:grid;grid-template-columns:2fr 1fr 0.8fr auto auto 26px;gap:6px;align-items:center;}
+.purch-hdr{font-size:9.5px;font-weight:700;color:var(--tx3);margin-bottom:5px;padding:0 2px;text-transform:uppercase;letter-spacing:.5px;}
+.purch-row{margin-bottom:6px;}
+.purch-row input{min-width:0;padding:5px 7px;border:1px solid var(--bdr2);border-radius:var(--rx);font-size:12px;font-family:var(--ff);color:var(--tx);background:var(--surf2);}
+.purch-row input:focus{outline:none;border-color:var(--acc);}
+.purch-sub{font-size:11px;color:var(--tx2);font-weight:600;text-align:right;white-space:nowrap;font-family:var(--ffm);}
+.purch-del{background:none;border:1px solid var(--bdr);color:var(--tx3);border-radius:var(--rx);width:24px;height:26px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:var(--tr);}
+.purch-del:hover{background:var(--red-dim);color:var(--red);border-color:var(--red);}
+.purch-total{text-align:right;font-size:11.5px;color:var(--tx2);margin-top:6px;padding-top:6px;border-top:1px solid var(--bdr);font-family:var(--ffm);}
+.amort-btn{padding:3px 8px;border-radius:var(--rx);font-size:10.5px;cursor:pointer;border:1px solid var(--bdr2);background:var(--surf2);color:var(--tx3);white-space:nowrap;font-family:var(--ff);font-weight:600;transition:var(--tr);}
+.amort-btn:hover{border-color:rgba(14,165,233,.3);}
+.amort-btn.on{background:var(--acc-dim);border-color:rgba(14,165,233,.35);color:var(--acc);font-weight:700;}
+
+.os-form{display:flex;flex-direction:column;gap:8px;}
+.tier-rows{display:flex;flex-direction:column;gap:5px;}
+.tier-row{display:flex;gap:5px;align-items:center;}
+.tier-row input{flex:1;min-width:0;padding:5px 7px;border:1px solid var(--bdr2);border-radius:var(--rx);font-size:12px;background:var(--surf2);color:var(--tx);font-family:var(--ffm);}
+.tier-row input:focus{outline:none;border-color:var(--acc);}
+.tier-row .tier-del{background:none;border:1px solid var(--bdr);color:var(--tx3);border-radius:var(--rx);padding:3px 8px;cursor:pointer;font-size:12px;transition:var(--tr);}
+.tier-row .tier-del:hover{background:var(--red-dim);color:var(--red);border-color:var(--red);}
+.add-tier{background:none;border:1px dashed var(--bdr2);color:var(--acc);padding:4px 12px;border-radius:var(--rx);cursor:pointer;font-size:11.5px;font-weight:600;align-self:flex-start;font-family:var(--ff);transition:var(--tr);}
+.add-tier:hover{background:var(--acc-dim);border-style:solid;border-color:rgba(14,165,233,.4);}
+
+.note{font-size:11px;color:var(--tx2);background:rgba(14,165,233,.05);padding:5px 10px;border-radius:var(--rx);border-left:2px solid rgba(14,165,233,.3);margin-top:4px;}
+.note.green{background:var(--grn-dim);border-color:var(--grn-bdr);color:var(--grn);}
+
+.add-op{padding:9px;background:var(--surf2);border:1px dashed var(--bdr2);border-radius:var(--rs);color:var(--acc);cursor:pointer;font-size:12px;font-weight:600;width:100%;text-align:center;transition:var(--tr);margin-top:6px;font-family:var(--ff);}
+.add-op:hover{background:var(--acc-dim);border-style:solid;border-color:rgba(14,165,233,.4);}
+
+.ot-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:9px;}
+
+/* ── RESULTS SIDEBAR ── */
+.r-card{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;}
+.r-hd{background:var(--surf2);border-bottom:1px solid var(--bdr);color:var(--txbr);padding:11px 15px;font-size:13px;font-weight:700;letter-spacing:.4px;display:flex;align-items:center;gap:8px;position:relative;}
+.r-hd::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--grn);}
+.r-bd{padding:13px;}
+
+.r-meta{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:11px;font-size:11px;color:var(--tx2);}
+.r-meta span strong{color:var(--txbr);font-family:var(--ffm);}
+
+.qty-tabs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:11px;}
+.qty-tab{padding:4px 12px;border-radius:20px;border:1px solid var(--bdr2);background:var(--surf2);color:var(--tx2);cursor:pointer;font-size:11px;font-weight:700;transition:var(--tr);font-family:var(--ffm);}
+.qty-tab.active{background:var(--acc);color:#000;border-color:var(--acc);}
+.qty-tab:hover:not(.active){background:var(--surf3);color:var(--tx);}
+
+/* Cost bars */
+.cost-bars{margin:11px 0;}
+.bar-row{display:flex;align-items:center;gap:7px;margin-bottom:5px;}
+.bar-label{font-size:9.5px;color:var(--tx3);width:82px;flex-shrink:0;text-align:right;text-transform:uppercase;letter-spacing:.4px;}
+.bar-track{flex:1;height:5px;background:var(--surf3);border-radius:3px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:3px;transition:width .4s ease;min-width:2px;}
+.bar-fill.mat{background:var(--acc);}
+.bar-fill.proc{background:var(--grn);}
+.bar-fill.os{background:var(--pur);}
+.bar-fill.misc{background:var(--amb);}
+.bar-val{font-size:10px;font-family:var(--ffm);color:var(--tx2);width:68px;flex-shrink:0;text-align:right;}
+
+.cost-tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.cost-tbl tr{border-bottom:1px solid var(--bdr);}
+.cost-tbl tr:last-child{border-bottom:none;}
+.cost-tbl td{padding:5px 5px;}
+.cost-tbl td:first-child{color:var(--tx2);}
+.cost-tbl td:last-child{text-align:right;font-weight:600;font-family:var(--ffm);color:var(--tx);}
+.cost-tbl .row-total{background:var(--surf2);}
+.cost-tbl .row-total td{font-weight:700;color:var(--txbr) !important;}
+.cost-tbl .row-price{background:rgba(14,165,233,.06);}
+.cost-tbl .row-price td:last-child{color:var(--acc) !important;font-size:17px;font-weight:800;}
+.cost-tbl .row-order td:last-child{color:var(--tx2);font-size:11px;}
+
+.mgn-badge{display:inline-block;background:var(--grn-dim);color:var(--grn);border:1px solid var(--grn-bdr);padding:2px 9px;border-radius:12px;font-size:10.5px;font-weight:700;font-family:var(--ffm);}
+
+.divider{height:1px;background:var(--bdr);margin:11px 0;}
+
+.sum-tbl{width:100%;border-collapse:collapse;font-size:11px;}
+.sum-tbl th{background:var(--surf2);padding:5px 5px;text-align:right;font-weight:700;color:var(--tx3);font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;}
+.sum-tbl th:first-child{text-align:left;}
+.sum-tbl td{padding:5px 5px;border-bottom:1px solid var(--bdr);text-align:right;font-family:var(--ffm);}
+.sum-tbl td:first-child{text-align:left;font-weight:700;color:var(--acc);}
+.sum-tbl tr.active-row{background:rgba(14,165,233,.05);}
+.sum-tbl tr.active-row td:last-child{color:var(--acc);font-weight:700;}
+
+.empty-hint{text-align:center;padding:36px 16px;color:var(--tx3);font-size:12px;line-height:2;}
+
+/* ── WORKPIECE CARD ── */
+.wp-card{border:1px solid var(--bdr);border-radius:var(--rs);overflow:hidden;background:var(--surf);margin-bottom:8px;}
+.wp-card-hd{background:var(--surf2);color:var(--tx);padding:8px 13px;display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none;}
+.wp-card-hd:hover{background:var(--surf3);}
+.wp-label{font-size:10.5px;font-weight:700;color:var(--acc);min-width:38px;flex-shrink:0;font-family:var(--ffm);}
+.wp-inputs{display:flex;gap:6px;align-items:center;flex:1;flex-wrap:wrap;min-width:0;}
+.wp-inputs input{padding:4px 7px;border:1px solid var(--bdr2);border-radius:var(--rx);background:var(--surf3);color:var(--txbr);font-size:12px;font-family:var(--ff);}
+.wp-inputs input:focus{outline:none;border-color:var(--acc);}
+.wp-inputs input.wp-name{flex:1;min-width:80px;}
+.wp-inputs input.wp-partno{width:100px;}
+.wp-inputs input.wp-mat{width:110px;}
+.wp-inputs input.wp-qty{width:52px;text-align:center;font-family:var(--ffm);}
+.wp-qty-lbl{font-size:11px;color:var(--tx3);white-space:nowrap;flex-shrink:0;}
+.wp-del{background:none;border:none;color:var(--tx3);cursor:pointer;font-size:16px;padding:0 4px;flex-shrink:0;transition:color .15s;}
+.wp-del:hover{color:var(--red);}
+.wp-arrow{font-size:10px;color:var(--tx3);transition:transform .2s;margin-left:4px;flex-shrink:0;}
+.wp-arrow.open{transform:rotate(180deg);}
+.wp-body{padding:13px 15px;border-top:1px solid var(--bdr);}
+.wp-body.collapsed{display:none;}
+.wp-section{margin-bottom:13px;padding-bottom:13px;border-bottom:1px solid var(--bdr);}
+.wp-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.wp-sec-hd{font-size:11.5px;font-weight:700;color:var(--txbr);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.asm-empty{text-align:center;padding:28px;color:var(--tx3);font-size:12px;background:var(--surf2);border:1px dashed var(--bdr2);border-radius:var(--rs);line-height:2;}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div class="tb-brand">
+    <div class="tb-logo-block">
+      <div class="tb-logo">ACHB</div>
+      <div class="tb-subtitle">RFQ Estimate System v3.3</div>
+    </div>
+    <div class="mode-seg">
+      <button id="modeBtn1" class="active" onclick="setMode('single')">單工件</button>
+      <button id="modeBtn2" onclick="setMode('assembly')">組合件</button>
+    </div>
+  </div>
+
+  <div class="tb-controls">
+    <div class="ctrl-grp">
+      <span class="ctrl-lbl">匯率</span>
+      <div class="ctrl-inner">
+        <input type="number" id="exchangeRate" value="30" min="1" step="0.5">
+        <span class="ctrl-unit">NTD/USD</span>
+      </div>
+    </div>
+    <div class="ctrl-grp">
+      <span class="ctrl-lbl">設定費模式</span>
+      <div class="ctrl-inner">
+        <select id="setupMode">
+          <option value="production">量產</option>
+          <option value="first">首次製作</option>
+        </select>
+      </div>
+    </div>
+    <div class="ctrl-grp">
+      <span class="ctrl-lbl">佣金 Commission</span>
+      <div class="ctrl-inner comm-ctrl">
+        <label class="toggle-sw">
+          <input type="checkbox" id="commissionOn" onchange="recalc()">
+          <span class="toggle-track"></span>
+        </label>
+        <span class="comm-pct">+5%</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tb-actions">
+    <button class="tb-btn tb-save" onclick="saveCalc()">↓ 儲存</button>
+    <button class="tb-btn tb-load" onclick="loadCalc()">↑ 載入</button>
+    <div style="width:1px;height:22px;background:var(--bdr);"></div>
+    <button class="tb-btn tb-excel" onclick="exportExcel()">⊞ 匯出 Excel</button>
+    <button class="tb-btn tb-reset" onclick="resetAll()">✕ 清空</button>
+  </div>
+</div>
+
+<!-- LAYOUT -->
+<div id="layout">
+  <div id="inputs">
+
+    <!-- 多工件 Tab Bar -->
+    <div class="card" id="tab-bar-card">
+      <div class="card-hd">
+        工件列表 &nbsp;/&nbsp; Parts
+        <span style="font-size:9px;font-weight:400;color:var(--tx3);text-transform:none;letter-spacing:0;">各工件獨立估價，共用匯率 / 毛利 / 數量級距</span>
+      </div>
+      <div class="card-bd" style="padding:10px 15px;">
+        <div class="part-tabs-bar" id="part-tabs"></div>
+      </div>
+    </div>
+
+    <!-- 基本資料 -->
+    <div class="card">
+      <div class="card-hd">基本資料 &nbsp;/&nbsp; Part Information</div>
+      <div class="card-bd">
+        <div class="fgrid">
+          <div class="ff">
+            <label>RFQ 單號 &nbsp;<span style="font-weight:400;color:var(--tx3);font-size:9px;text-transform:none;letter-spacing:0;">自動生成，可手動覆蓋</span></label>
+            <div style="display:flex;gap:5px;">
+              <input type="text" id="rfqNo" style="flex:1;min-width:0;">
+              <button onclick="regenerateRfqNo()" title="產生新的流水號"
+                style="padding:4px 9px;background:var(--acc-dim);color:var(--acc);border:1px solid rgba(14,165,233,.3);border-radius:var(--rx);cursor:pointer;font-size:11px;white-space:nowrap;flex-shrink:0;font-family:var(--ff);">↻ 新號</button>
+            </div>
+          </div>
+          <div class="ff">
+            <label style="display:flex;justify-content:space-between;align-items:center;">
+              客戶 Customer
+              <span id="custCodeBadge" style="font-size:9px;background:var(--acc);color:#000;border-radius:3px;padding:1px 7px;font-weight:700;letter-spacing:.5px;display:none;font-family:var(--ffm);"></span>
+            </label>
+            <select id="customer" onchange="onCustomerChange()" style="width:100%;"></select>
+          </div>
+          <div class="ff">
+            <label>料號 Part No. <span style="font-weight:400;color:var(--acc);font-size:9px;text-transform:none;">(目前工件)</span></label>
+            <input type="text" id="partNo" placeholder="e.g. M10848" oninput="S.partNo=this.value;renderTabBar();recalc()">
+          </div>
+          <div class="ff">
+            <label>版本 Revision</label>
+            <input type="text" id="revision" placeholder="e.g. RevB" oninput="S.revision=this.value">
+          </div>
+          <div class="ff">
+            <label>材料 Material</label>
+            <input type="text" id="material" placeholder="e.g. SUS316L" oninput="S.material=this.value;recalc()">
+          </div>
+          <div class="ff">
+            <label>表面處理 Surface</label>
+            <input type="text" id="surface" placeholder="e.g. Class II Anodize" oninput="S.surface=this.value;recalc()">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 數量級距 -->
+    <div class="card">
+      <div class="card-hd" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <span>數量級距 &nbsp;/&nbsp; Quantity Tiers</span>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:400;">
+          <span style="font-size:9px;color:var(--tx3);font-weight:700;text-transform:uppercase;letter-spacing:.8px;">預設毛利</span>
+          <select id="difficulty" style="background:var(--surf2);border:1px solid var(--bdr2);color:var(--tx);padding:3px 8px;border-radius:var(--rx);font-size:12px;font-family:var(--ff);" onchange="toggleCustomMargin();syncQtyMgnPlaceholders();recalc()">
+            <option value="0">預設 (30%)</option>
+            <option value="1">1 級 — 25%</option>
+            <option value="2">2 級 — 27.5%</option>
+            <option value="3">3 級 — 32.5%</option>
+            <option value="4">4 級 — 37.5%</option>
+            <option value="5">5 級 — 42.5%</option>
+            <option value="custom">自訂...</option>
+          </select>
+          <input type="number" id="customMargin" value="30" min="1" max="99" step="0.5"
+            style="display:none;width:50px;background:var(--surf2);border:1px solid var(--bdr2);color:var(--tx);padding:3px 7px;border-radius:var(--rx);font-size:12px;font-family:var(--ffm);" oninput="recalc()">
+          <span id="customMarginPct" style="display:none;font-size:12px;color:var(--tx3);">%</span>
+        </div>
+      </div>
+      <div class="card-bd">
+        <div class="qty-wrap" id="qtyList"></div>
+        <div style="margin-top:9px;" class="qty-add">
+          <input type="number" id="newQty" placeholder="數量" min="1">
+          <button onclick="addQty()">＋ 新增</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Single mode cards -->
+    <div id="single-cards">
+
+    <div class="card">
+      <div class="card-hd">材料成本 &nbsp;/&nbsp; Material Cost</div>
+      <div class="card-bd">
+        <div>
+          <label style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:6px;">
+            數量級距單價 (NTD / pc) &nbsp;—&nbsp;
+            <span style="font-weight:400;color:var(--tx3);text-transform:none;letter-spacing:0;">數量留空 = 不限數量固定單價</span>
+          </label>
+          <div class="tier-rows" id="matTierList"></div>
+          <button class="add-tier" onclick="addMatTier()" style="margin-top:5px;">＋ 新增價格級距</button>
+        </div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--bdr);display:flex;align-items:flex-end;gap:12px;">
+          <div class="ff" style="max-width:180px;">
+            <label>架機數量 Setup Batch Qty (pcs)</label>
+            <input type="number" id="matSetupQty" value="" min="0" step="1" placeholder="留空 = 依訂單量" oninput="S.matSetupQty=parseFloat(this.value)||0;recalc()">
+          </div>
+          <div class="note" style="margin-top:0;flex:1;">
+            材料採購批量，決定使用哪個供應商報價級距<br>
+            <em>例：訂 50 件但架機需備料 100 件 → 填 100</em>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">
+        製程途層 &nbsp;/&nbsp; Process Routing
+        <span class="badge" id="opBadge">0 道</span>
+      </div>
+      <div class="card-bd">
+        <div class="proc-list" id="procList"></div>
+        <button class="add-op" onclick="addProc()">＋ 新增製程步驟 / Add Process Step</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">
+        外購物料清單 &nbsp;/&nbsp; Purchased Parts
+        <span class="badge" id="purchBadge">0 項</span>
+      </div>
+      <div class="card-bd">
+        <div class="purch-hdr">
+          <span>品項名稱 Item</span>
+          <span>單價 NTD</span>
+          <span>用量/件</span>
+          <span>計算方式</span>
+          <span style="text-align:right;">小計</span>
+          <span></span>
+        </div>
+        <div id="purchList"></div>
+        <div class="purch-total" id="purchTotal" style="display:none;"></div>
+        <button class="add-op" onclick="addPurchItem()" style="margin-top:6px;">＋ 新增品項 / Add Item</button>
+      </div>
+    </div>
+
+    </div><!-- end #single-cards -->
+
+    <!-- Assembly mode cards -->
+    <div id="asm-cards" style="display:none;">
+      <div id="wpList"></div>
+      <button class="add-op" onclick="addWorkpiece()" style="margin-top:4px;">＋ 新增工件 / Add Workpiece</button>
+
+      <div class="card" style="margin-top:10px;">
+        <div class="card-hd">
+          組合件外購料（共用）&nbsp;/&nbsp; Assembly Purchased Parts
+          <span class="badge" id="asmPurchBadge">0 項</span>
+        </div>
+        <div class="card-bd">
+          <div class="purch-hdr">
+            <span>品項名稱 Item</span>
+            <span>單價 NTD</span>
+            <span>用量/set</span>
+            <span>計算方式</span>
+            <span style="text-align:right;">小計</span>
+            <span></span>
+          </div>
+          <div id="asmPurchList"></div>
+          <div class="purch-total" id="asmPurchTotal" style="display:none;"></div>
+          <button class="add-op" onclick="addPurchItem(true)" style="margin-top:6px;">＋ 新增品項 / Add Item</button>
+        </div>
+      </div>
+    </div><!-- end #asm-cards -->
+
+    <!-- 一次性費用 -->
+    <div class="card">
+      <div class="card-hd">刀具 / 治具 / 一次性費用 &nbsp;/&nbsp; Tooling &amp; One-time Costs</div>
+      <div class="card-bd">
+        <div class="ot-grid">
+          <div class="ff"><label>刀具費 Tooling (NTD)</label>
+            <input type="number" id="ot_knife" value="0" min="0" oninput="S.ot_knife=parseFloat(this.value)||0;recalc()"></div>
+          <div class="ff"><label>治具費 Fixture (NTD)</label>
+            <input type="number" id="ot_fixture" value="0" min="0" oninput="S.ot_fixture=parseFloat(this.value)||0;recalc()"></div>
+          <div class="ff"><label>模具費 Mold (NTD)</label>
+            <input type="number" id="ot_mold" value="0" min="0" oninput="S.ot_mold=parseFloat(this.value)||0;recalc()"></div>
+          <div class="ff"><label>其他 Others (NTD)</label>
+            <input type="number" id="ot_other" value="0" min="0" oninput="S.ot_other=parseFloat(this.value)||0;recalc()"></div>
+        </div>
+        <div class="note" style="margin-top:9px;">
+          一次性費用依各數量級距均攤至每件成本 (One-time costs amortized per quantity tier)
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end #inputs -->
+
+  <!-- Results Sidebar -->
+  <div id="sidebar">
+    <div class="r-card">
+      <div class="r-hd">▶ 即時估價結果 / Live Quote</div>
+      <div class="r-bd" id="resultsBody">
+        <div class="empty-hint">尚未輸入製程資料<br>請點選「新增製程步驟」開始</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end #layout -->
+
+<script>
+// ══════════════════════════════════════════════════════
+// MACHINE DATA
+// ══════════════════════════════════════════════════════
+const MACHINES = [
+  { id:'CNC1',  label:'走心 / CNC1',  grp:'走心 CNC',  perMin:7.35, setupHrUSD:31.5, setupDayUSD:252 },
+  { id:'CNC3',  label:'走心 / CNC3',  grp:'走心 CNC',  perMin:4.9,  setupHrUSD:31.5, setupDayUSD:252 },
+  { id:'CNC4',  label:'走心 / CNC4',  grp:'走心 CNC',  perMin:7.35, setupHrUSD:31.5, setupDayUSD:252 },
+  { id:'CNC5',  label:'走心 / CNC5',  grp:'走心 CNC',  perMin:7.35, setupHrUSD:31.5, setupDayUSD:252 },
+  { id:'CNC6',  label:'走心 / CNC6',  grp:'走心 CNC',  perMin:7.35, setupHrUSD:31.5, setupDayUSD:252 },
+  { id:'CNC7',  label:'走心 / CNC7',  grp:'走心 CNC',  perMin:7.35, setupHrUSD:31.5, setupDayUSD:252 },
+  { id:'CNC8',  label:'走心 / CNC8',  grp:'走心 CNC',  perMin:7.35, setupHrUSD:31.5, setupDayUSD:252 },
+  { id:'CNC9',  label:'走心 / CNC9',  grp:'走心 CNC',  perMin:8.4,  setupHrUSD:35,   setupDayUSD:280 },
+  { id:'CNC10', label:'走心 / CNC10', grp:'走心 CNC',  perMin:7.7,  setupHrUSD:31.5, setupDayUSD:252 },
+  { id:'CNC18', label:'走心 / CNC18', grp:'走心 CNC',  perMin:8.4,  setupHrUSD:35,   setupDayUSD:280 },
+  { id:'CNC20', label:'走心 / CNC20', grp:'走心 CNC',  perMin:7.7,  setupHrUSD:31.5, setupDayUSD:252 },
+  { id:'CNC21', label:'走心 / CNC21', grp:'走心 CNC',  perMin:10.5, setupHrUSD:35,   setupDayUSD:280 },
+  { id:'CNC11', label:'走刀 / CNC11', grp:'走刀 CNC',  perMin:7.35, setupHrUSD:31.5, setupDayUSD:252 },
+  { id:'CNC12', label:'走刀 / CNC12', grp:'走刀 CNC',  perMin:7.35, setupHrUSD:31.5, setupDayUSD:252 },
+  { id:'CNC13', label:'走刀 / CNC13', grp:'走刀 CNC',  perMin:7.35, setupHrUSD:31.5, setupDayUSD:252 },
+  { id:'CNC14', label:'走刀 / CNC14', grp:'走刀 CNC',  perMin:10.5, setupHrUSD:35,   setupDayUSD:280 },
+  { id:'CNC15', label:'走刀 / CNC15', grp:'走刀 CNC',  perMin:7.35, setupHrUSD:31.5, setupDayUSD:252 },
+  { id:'CNC16', label:'走刀 / CNC16', grp:'走刀 CNC',  perMin:7.35, setupHrUSD:31.5, setupDayUSD:252 },
+  { id:'CNC17', label:'走刀 / CNC17', grp:'走刀 CNC',  perMin:7.35, setupHrUSD:31.5, setupDayUSD:252 },
+  { id:'CNC19', label:'走刀 / CNC19', grp:'走刀 CNC',  perMin:10.5, setupHrUSD:35,   setupDayUSD:280 },
+  { id:'CNC22', label:'走刀 / CNC22', grp:'走刀 CNC',  perMin:10.5, setupHrUSD:35,   setupDayUSD:280 },
+  { id:'MC_AL',  label:'MC 加工鋁',            grp:'MC / 加工中心', perMin:7.7,  setupHrUSD:35, setupDayUSD:280 },
+  { id:'MC_SS',  label:'MC 加工白鐵',           grp:'MC / 加工中心', perMin:8.4,  setupHrUSD:35, setupDayUSD:280 },
+  { id:'MC_PL',  label:'MC 加工塑膠件+硬度高',  grp:'MC / 加工中心', perMin:10.5, setupHrUSD:35, setupDayUSD:280 },
+  { id:'HZ',     label:'臥式 (Horizontal)',      grp:'MC / 加工中心', perMin:11.2, setupHrUSD:35, setupDayUSD:0   },
+  { id:'GR_CYL', label:'研磨 — 圓筒 / 拋光 / 無心', grp:'研磨 / 整直', perMin:10.5, setupHrUSD:31.5, setupDayUSD:252 },
+  { id:'GR_FLT', label:'研磨 — 大平磨',              grp:'研磨 / 整直', perMin:10.5, setupHrUSD:17.5, setupDayUSD:126 },
+  { id:'STRT',   label:'廠內整直',                   grp:'研磨 / 整直', perMin:10.5, setupHrUSD:0,    setupDayUSD:null },
+  { id:'LASER', label:'雷刻 (Laser Engrave)',        grp:'廠內後製程', perMin:7,    setupHrUSD:21,  setupDayUSD:null },
+  { id:'BENCH', label:'桌上車床 (Bench Lathe)',       grp:'廠內後製程', perMin:4.9,  setupHrUSD:0,   setupDayUSD:null },
+  { id:'DEBUR', label:'去毛邊 (Deburring)',           grp:'廠內後製程', perMin:4.9,  setupHrUSD:0,   setupDayUSD:null },
+  { id:'ASMB',  label:'組裝 — 無塵室 (Clean Room)',  grp:'廠內後製程', perMin:10.5, setupHrUSD:21,  setupDayUSD:null },
+  { id:'ROLL',  label:'滾牙 (Thread Rolling)',        grp:'廠內後製程', perMin:14,   setupHrUSD:21,  setupDayUSD:null },
+  { id:'PAINT', label:'噴漆 / 印刷 / 移印',           grp:'廠內後製程', perMin:7,    setupHrUSD:0,   setupDayUSD:null },
+  { id:'TEST',  label:'測試 (Testing / Inspection)', grp:'廠內後製程', perMin:15,   setupHrUSD:0,   setupDayUSD:null },
+];
+
+const MACH_MAP = Object.fromEntries(MACHINES.map(m => [m.id, m]));
+
+const OS_PRESETS = [
+  '陽極 Anodizing','硬陽極 Hard Anodizing','電鍍 Plating','化學鍍 E-less Plating',
+  '熱處理 Heat Treatment','滲碳 Carburizing','氮化 Nitriding',
+  '噴砂 Sandblasting','噴丸 Shot Peening','噴漆 Painting',
+  '電著塗裝 E-coat','鈍化 Passivation','鍍鈦 PVD Ti-coating',
+  '蒸氣拋光 Vapor Polish','外包 機加工 CNC','外包研磨','其他外發'
+];
+
+// ══════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════
+let G = { qtys:[5,50,100], activeQty:null, qtyMargins:{} };
+
+function newTab(id){
+  return { id, partNo:'', revision:'', material:'', surface:'',
+    matSetupQty:0, ot_knife:0, ot_fixture:0, ot_mold:0, ot_other:0,
+    procs:[], nextId:1, matTiers:[{qty:null,price:0}],
+    purchItems:[], nextPurchId:1 };
+}
+let nextTabId = 2;
+let TABS = [newTab(1)];
+let activeTabId = 1;
+let S = TABS[0];
+
+let MODE = 'single';
+let A = {
+  workpieces: [],
+  nextWpId: 1,
+  purchItems: [],
+  nextPurchId: 1,
+};
+
+// ══════════════════════════════════════════════════════
+// QUANTITY
+// ══════════════════════════════════════════════════════
+function renderQtys() {
+  const el = document.getElementById('qtyList');
+  el.innerHTML = '';
+  const sorted = [...G.qtys].sort((a,b)=>a-b);
+  sorted.forEach(q => {
+    const t = document.createElement('div');
+    t.className = 'qty-tag';
+    const _ov = G.qtyMargins[q], _isC = _ov != null, _gp = (getMargin()*100).toFixed(1);
+    t.innerHTML = `${q.toLocaleString()} <small>pcs</small><span class="qty-mgn-sec${_isC?' custom':''}" onclick="this.querySelector('input').focus()"><span class="qty-mgn-lbl">毛利</span><input class="qty-mgn-inp" type="number" min="1" max="99" step="0.5" ${_isC?`value="${(_ov*100).toFixed(1)}"`:`placeholder="${_gp}"`} title="此級距毛利率（空白=跟全域）" oninput="setQtyMargin(${q},this.value)"><span class="qty-mgn-pct">%</span></span><button onclick="removeQty(${q})">×</button>`;
+    el.appendChild(t);
+  });
+  if (!sorted.includes(G.activeQty)) G.activeQty = sorted[0] || null;
+  recalc();
+}
+function addQty() {
+  const inp = document.getElementById('newQty');
+  const v = parseInt(inp.value);
+  if (v > 0 && !G.qtys.includes(v)) { G.qtys.push(v); inp.value=''; renderQtys(); }
+}
+function removeQty(q) { G.qtys = G.qtys.filter(x=>x!==q); delete G.qtyMargins[q]; renderQtys(); }
+function setQtyMargin(qty, val) {
+  const v = parseFloat(val);
+  const hasOv = isFinite(v) && v > 0 && v < 100;
+  if (hasOv) { G.qtyMargins[qty] = v / 100; } else { delete G.qtyMargins[qty]; }
+  document.querySelectorAll('.qty-mgn-inp').forEach(inp => {
+    if (inp.oninput && inp.getAttribute('oninput') && inp.getAttribute('oninput').includes(`setQtyMargin(${qty},`)) {
+      inp.closest('.qty-mgn-sec')?.classList.toggle('custom', hasOv);
+    }
+  });
+  recalc();
+}
+function getMarginForQty(qty) {
+  const ov = G.qtyMargins && G.qtyMargins[qty];
+  return (ov != null && ov > 0 && ov < 1) ? ov : getMargin();
+}
+function syncQtyMgnPlaceholders() {
+  const pct = (getMargin()*100).toFixed(1);
+  document.querySelectorAll('.qty-mgn-sec:not(.custom) .qty-mgn-inp').forEach(inp => inp.placeholder = pct);
+}
+
+// ══════════════════════════════════════════════════════
+// TAB MANAGEMENT
+// ══════════════════════════════════════════════════════
+function tabLabel(tab){ return tab.partNo.trim() || 'Part '+tab.id; }
+
+function renderTabBar(){
+  const wrap = document.getElementById('part-tabs');
+  if(!wrap) return;
+  wrap.innerHTML = TABS.map(t =>
+    `<button class="part-tab${t.id===activeTabId?' active':''}" onclick="switchTab(${t.id})">${escH(tabLabel(t))}${TABS.length>1?`<span class="part-tab-del" onclick="event.stopPropagation();removeTab(${t.id})">×</span>`:''}</button>`
+  ).join('') + `<button class="add-tab-btn" onclick="addTab()">＋ 新增工件</button>`;
+}
+
+function loadTabToDOM(tab){
+  document.getElementById('partNo').value      = tab.partNo      || '';
+  document.getElementById('revision').value    = tab.revision    || '';
+  document.getElementById('material').value    = tab.material    || '';
+  document.getElementById('surface').value     = tab.surface     || '';
+  document.getElementById('matSetupQty').value = tab.matSetupQty || '';
+  document.getElementById('ot_knife').value    = tab.ot_knife    || 0;
+  document.getElementById('ot_fixture').value  = tab.ot_fixture  || 0;
+  document.getElementById('ot_mold').value     = tab.ot_mold     || 0;
+  document.getElementById('ot_other').value    = tab.ot_other    || 0;
+}
+
+function switchTab(id){
+  if(id===activeTabId) return;
+  activeTabId = id;
+  S = TABS.find(t=>t.id===id);
+  loadTabToDOM(S);
+  renderProcs(); renderMatTiers(); renderPurchItems();
+  renderTabBar(); recalc();
+}
+
+function addTab(){
+  const tab = newTab(nextTabId++);
+  TABS.push(tab);
+  activeTabId = tab.id; S = tab;
+  loadTabToDOM(S);
+  renderProcs(); renderMatTiers(); renderPurchItems();
+  renderTabBar(); recalc();
+}
+
+function removeTab(id){
+  if(TABS.length<=1) return;
+  const idx = TABS.findIndex(t=>t.id===id);
+  TABS = TABS.filter(t=>t.id!==id);
+  switchTab(TABS[Math.min(idx, TABS.length-1)].id);
+}
+
+// ══════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════
+function _ws(wpId) { return wpId ? A.workpieces.find(w=>w.id===wpId) : null; }
+function _w(wpId)  { return wpId ? `,${wpId}` : ''; }
+function _p(wpId)  { return wpId ? `wp${wpId}_` : ''; }
+function _st(wpId) { return wpId ? _ws(wpId) : S; }
+
+// ══════════════════════════════════════════════════════
+// PROCESS MANAGEMENT
+// ══════════════════════════════════════════════════════
+function addProc(wpId) {
+  const st = _st(wpId);
+  if (!st) return;
+  const id = st.nextId++;
+  st.procs.push({
+    id, type:'inhouse',
+    machId: 'CNC5',
+    timeMin: 0,
+    setupHrs: 0,
+    name:'', vendor:'',
+    tiers:[{qty:null, price:0}],
+  });
+  renderProcs(wpId ? _ws(wpId) : null);
+  recalc();
+}
+
+function removeProc(id, wpId) {
+  const st = _st(wpId);
+  if (!st) return;
+  st.procs = st.procs.filter(p=>p.id!==id);
+  renderProcs(wpId ? _ws(wpId) : null); recalc();
+}
+
+function toggleType(id, type, wpId) {
+  const st = _st(wpId);
+  const p = st ? st.procs.find(p=>p.id===id) : null;
+  if (p) { p.type = type; renderProcs(wpId ? _ws(wpId) : null); recalc(); }
+}
+
+function buildMachOptions(sel) {
+  const grps = [...new Set(MACHINES.map(m=>m.grp))];
+  return grps.map(g => {
+    const opts = MACHINES.filter(m=>m.grp===g)
+      .map(m=>`<option value="${m.id}" ${m.id===sel?'selected':''}>${m.label}  (NT$${m.perMin}/min)</option>`)
+      .join('');
+    return `<optgroup label="${g}">${opts}</optgroup>`;
+  }).join('');
+}
+
+function renderProcs(wp) {
+  const wpId  = wp ? wp.id : null;
+  const procs = wp ? wp.procs : S.procs;
+  const listId  = `${_p(wpId)}procList`;
+  const badgeId = `${_p(wpId)}opBadge`;
+
+  const list = document.getElementById(listId);
+  if (!list) return;
+  list.innerHTML = '';
+
+  const badge = document.getElementById(badgeId);
+  if (badge) badge.textContent = `${procs.length} 道`;
+
+  procs.forEach((proc, idx) => {
+    const opN = `OP${String(idx+1).padStart(2,'0')}`;
+    const m = MACH_MAP[proc.machId];
+    const sum = proc.type === 'inhouse'
+      ? (m ? `${m.label}  ·  ${proc.timeMin||0} min/pc  ·  NT$${((proc.timeMin||0)*m.perMin).toFixed(1)}/pc` : '')
+      : `${proc.name||'(未命名)'}  ·  ${proc.vendor||''}  ·  ${proc.tiers.filter(t=>t.price>0).length} 個報價`;
+
+    const tiersHtml = proc.tiers.map((t,ti)=>`
+      <div class="tier-row">
+        <input type="number" placeholder="數量 pcs" value="${t.qty||''}" min="1"
+          oninput="updTier(${proc.id},${ti},'qty',this.value${_w(wpId)})">
+        <input type="number" placeholder="NTD / pc" value="${t.price||''}" min="0"
+          oninput="updTier(${proc.id},${ti},'price',this.value${_w(wpId)})">
+        <button class="tier-del" onclick="delTier(${proc.id},${ti}${_w(wpId)})">×</button>
+      </div>`).join('');
+
+    const pfx = _p(wpId);
+    const div = document.createElement('div');
+    div.className = `op-card ${proc.type}`;
+    div.id = `${pfx}op_${proc.id}`;
+    div.innerHTML = `
+      <div class="op-hd" onclick="toggleCollapse('${pfx}bd_${proc.id}','${pfx}arr_${proc.id}')">
+        <span class="op-num">${opN}</span>
+        <div class="type-sw">
+          <button class="${proc.type==='inhouse'?'on-in':''}"
+            onclick="event.stopPropagation();toggleType(${proc.id},'inhouse'${_w(wpId)})">廠內</button>
+          <button class="${proc.type==='outsource'?'on-out':''}"
+            onclick="event.stopPropagation();toggleType(${proc.id},'outsource'${_w(wpId)})">廠外</button>
+        </div>
+        <span class="op-sum" id="${pfx}sum_${proc.id}">${sum}</span>
+        <button class="op-del" onclick="event.stopPropagation();removeProc(${proc.id}${_w(wpId)})">×</button>
+        <span class="op-arrow open" id="${pfx}arr_${proc.id}">▼</span>
+      </div>
+      <div class="op-bd" id="${pfx}bd_${proc.id}">
+        ${proc.type==='inhouse' ? `
+          <div class="ih-grid">
+            <div class="ff">
+              <label>機台 / 製程 Machine</label>
+              <select onchange="updProc(${proc.id},'machId',this.value${_w(wpId)})">
+                ${buildMachOptions(proc.machId)}
+              </select>
+            </div>
+            <div class="ff">
+              <label>加工時間 (min / pc)</label>
+              <input type="number" value="${proc.timeMin}" min="0" step="0.5"
+                oninput="updProc(${proc.id},'timeMin',this.value${_w(wpId)})">
+            </div>
+            <div class="ff">
+              <label>設定時間 Setup (hr)</label>
+              <input type="number" value="${proc.setupHrs}" min="0" step="0.5"
+                oninput="updProc(${proc.id},'setupHrs',this.value${_w(wpId)})">
+            </div>
+          </div>
+          ${m ? `<div class="note green" style="margin-top:7px;">
+            費率: NT$${m.perMin}/min &nbsp;|&nbsp; 設定費: ${m.setupHrUSD > 0 ? `USD$${m.setupHrUSD}/hr` : '無設定費'}
+          </div>` : ''}
+        ` : `
+          <div class="os-form">
+            <div class="fgrid" style="grid-template-columns:1fr 1fr;">
+              <div class="ff">
+                <label>製程名稱 Process</label>
+                <input type="text" value="${proc.name}" placeholder="e.g. 陽極 Anodizing"
+                  list="${pfx}dlist_${proc.id}"
+                  oninput="updProc(${proc.id},'name',this.value${_w(wpId)})">
+                <datalist id="${pfx}dlist_${proc.id}">${OS_PRESETS.map(p=>`<option value="${p}">`).join('')}</datalist>
+              </div>
+              <div class="ff">
+                <label>廠商 Vendor</label>
+                <input type="text" value="${proc.vendor}" placeholder="廠商名稱"
+                  oninput="updProc(${proc.id},'vendor',this.value${_w(wpId)})">
+              </div>
+            </div>
+            <div>
+              <label style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:5px;">
+                數量級距報價 Tiered Pricing (NTD / pc)
+              </label>
+              <div class="tier-rows" id="${pfx}trows_${proc.id}">${tiersHtml}</div>
+              <button class="add-tier" onclick="addTier(${proc.id}${_w(wpId)})">＋ 新增報價級距</button>
+            </div>
+            <div class="note">廠外報價直接計入成本，毛利由上方難度設定決定<br>
+              <em>外包計價原則：報價 / 0.7 = 建議售價（即 30% 毛利）</em></div>
+          </div>
+        `}
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function renderTierRows(procId, wpId) {
+  const st = _st(wpId);
+  const p = st ? st.procs.find(pr=>pr.id===procId) : null;
+  if (!p) { renderProcs(wpId ? _ws(wpId) : null); return; }
+  const pfx = _p(wpId);
+  const el = document.getElementById(`${pfx}trows_${procId}`);
+  if (!el) { renderProcs(wpId ? _ws(wpId) : null); return; }
+  el.innerHTML = p.tiers.map((t,ti)=>`
+    <div class="tier-row">
+      <input type="number" placeholder="數量 pcs" value="${t.qty||''}" min="1"
+        oninput="updTier(${procId},${ti},'qty',this.value${_w(wpId)})">
+      <input type="number" placeholder="NTD / pc" value="${t.price||''}" min="0"
+        oninput="updTier(${procId},${ti},'price',this.value${_w(wpId)})">
+      <button class="tier-del" onclick="delTier(${procId},${ti}${_w(wpId)})">×</button>
+    </div>`).join('');
+}
+
+function toggleCollapse(bdId, arrId) {
+  document.getElementById(bdId).classList.toggle('collapsed');
+  document.getElementById(arrId).classList.toggle('open');
+}
+
+function updProc(id, field, val, wpId) {
+  const st = _st(wpId);
+  const p = st ? st.procs.find(p=>p.id===id) : null;
+  if (!p) return;
+  const numFields = ['timeMin','setupHrs'];
+  p[field] = numFields.includes(field) ? (parseFloat(val)||0) : val;
+  const pfx = _p(wpId);
+  const sumEl = document.getElementById(`${pfx}sum_${id}`);
+  if (sumEl) {
+    const m = MACH_MAP[p.machId];
+    sumEl.textContent = p.type==='inhouse'
+      ? (m ? `${m.label}  ·  ${p.timeMin||0} min/pc  ·  NT$${((p.timeMin||0)*m.perMin).toFixed(1)}/pc` : '')
+      : `${p.name||'(未命名)'}  ·  ${p.vendor||''}  ·  ${p.tiers.filter(t=>t.price>0).length} 個報價`;
+  }
+  if (field === 'machId') {
+    const bd = document.getElementById(`${pfx}bd_${id}`);
+    if (bd) {
+      const hint = bd.querySelector('.note.green');
+      const m2 = MACH_MAP[val];
+      if (hint && m2) hint.innerHTML = `費率: NT$${m2.perMin}/min &nbsp;|&nbsp; 設定費: ${m2.setupHrUSD > 0 ? `USD$${m2.setupHrUSD}/hr` : '無設定費'}`;
+    }
+  }
+  recalc();
+}
+
+function updTier(procId, ti, field, val, wpId) {
+  const st = _st(wpId);
+  const p = st ? st.procs.find(p=>p.id===procId) : null;
+  if (!p) return;
+  p.tiers[ti][field] = field==='qty' ? (parseInt(val)||null) : (parseFloat(val)||0);
+  recalc();
+}
+function addTier(procId, wpId) {
+  const st = _st(wpId);
+  const p = st ? st.procs.find(p=>p.id===procId) : null;
+  if (!p) return;
+  p.tiers.push({qty:null, price:0});
+  renderTierRows(procId, wpId);
+}
+function delTier(procId, ti, wpId) {
+  const st = _st(wpId);
+  const p = st ? st.procs.find(p=>p.id===procId) : null;
+  if (!p) return;
+  if (p.tiers.length > 1) p.tiers.splice(ti,1);
+  else p.tiers[0] = {qty:null, price:0};
+  renderTierRows(procId, wpId); recalc();
+}
+
+// ══════════════════════════════════════════════════════
+// CALCULATION ENGINE
+// ══════════════════════════════════════════════════════
+function getMargin() {
+  const d = document.getElementById('difficulty').value;
+  if (d === 'custom') {
+    const v = parseFloat(document.getElementById('customMargin').value);
+    return (isFinite(v) && v > 0 && v < 100) ? v / 100 : 0.30;
+  }
+  return ({0:0.30,1:0.25,2:0.275,3:0.325,4:0.375,5:0.425})[parseInt(d)] ?? 0.30;
+}
+
+function toggleCustomMargin() {
+  const isCustom = document.getElementById('difficulty').value === 'custom';
+  document.getElementById('customMargin').style.display   = isCustom ? 'inline-block' : 'none';
+  document.getElementById('customMarginPct').style.display = isCustom ? 'inline'       : 'none';
+}
+
+function getSetupHrs(proc) {
+  return proc.setupHrs;
+}
+
+// ══════════════════════════════════════════════════════
+// MATERIAL TIERS
+// ══════════════════════════════════════════════════════
+function renderMatTiers(wp) {
+  const wpId = wp ? wp.id : null;
+  const tiers = wp ? wp.matTiers : S.matTiers;
+  const el = document.getElementById(`${_p(wpId)}matTierList`);
+  if (!el) return;
+  el.innerHTML = tiers.map((t, i) => `
+    <div class="tier-row">
+      <input type="number" placeholder="數量 pcs (留空=固定價)" value="${t.qty||''}" min="1"
+        oninput="updMatTier(${i},'qty',this.value${_w(wpId)})">
+      <input type="number" placeholder="NTD / pc" value="${t.price||''}" min="0"
+        oninput="updMatTier(${i},'price',this.value${_w(wpId)})">
+      <button class="tier-del" onclick="delMatTier(${i}${_w(wpId)})">×</button>
+    </div>`).join('');
+}
+function addMatTier(wpId) {
+  const st = _st(wpId);
+  if (!st) return;
+  st.matTiers.push({qty:null, price:0});
+  renderMatTiers(wpId ? _ws(wpId) : null);
+}
+function delMatTier(i, wpId) {
+  const st = _st(wpId);
+  if (!st) return;
+  if (st.matTiers.length > 1) st.matTiers.splice(i,1);
+  else st.matTiers[0] = {qty:null, price:0};
+  renderMatTiers(wpId ? _ws(wpId) : null); recalc();
+}
+function updMatTier(i, field, val, wpId) {
+  const st = _st(wpId);
+  if (!st) return;
+  st.matTiers[i][field] = field==='qty' ? (parseInt(val)||null) : (parseFloat(val)||0);
+  recalc();
+}
+
+// ══════════════════════════════════════════════════════
+// PURCHASED ITEMS
+// ══════════════════════════════════════════════════════
+function _pst(ia)  { return ia ? A : S; }
+function _pel(ia, key) {
+  const m = {list:ia?'asmPurchList':'purchList', total:ia?'asmPurchTotal':'purchTotal', badge:ia?'asmPurchBadge':'purchBadge'};
+  return document.getElementById(m[key]);
+}
+function _psid(ia, id) { return ia ? `apsub_${id}` : `psub_${id}`; }
+
+function renderPurchItems(ia) {
+  ia = !!ia;
+  const st    = _pst(ia);
+  const el    = _pel(ia,'list');
+  const total = _pel(ia,'total');
+  const badge = _pel(ia,'badge');
+  if (!el) return;
+  if (badge) badge.textContent = `${st.purchItems.length} 項`;
+
+  if (!st.purchItems.length) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--tx3);padding:6px 2px;">尚無外購品項</div>';
+    if (total) total.style.display = 'none';
+    recalc(); return;
+  }
+
+  const aqty = G.activeQty || (G.qtys.length ? Math.min(...G.qtys) : 1);
+  const xs = ia ? ',true' : '';
+
+  el.innerHTML = st.purchItems.map(it => {
+    const lineTotal = (it.unitPrice||0) * (it.qtyPerPc||1);
+    const sub = it.amort ? r2(lineTotal / aqty) : r2(lineTotal);
+    const subLabel = it.amort
+      ? `NT$ ${sub.toLocaleString('zh-TW',{minimumFractionDigits:1,maximumFractionDigits:1})} <span style="font-weight:400;color:var(--tx3);font-size:9.5px;">@${aqty}pc</span>`
+      : `NT$ ${sub.toLocaleString('zh-TW',{minimumFractionDigits:1,maximumFractionDigits:1})}`;
+    return `<div class="purch-row">
+      <input type="text" placeholder="品項名稱 e.g. O-ring" value="${it.name||''}"
+        oninput="updPurchItem(${it.id},'name',this.value${xs})">
+      <input type="number" placeholder="0" value="${it.unitPrice||''}" min="0" step="0.01"
+        oninput="updPurchItem(${it.id},'unitPrice',this.value${xs})">
+      <input type="number" placeholder="1" value="${it.qtyPerPc||''}" min="0" step="any"
+        oninput="updPurchItem(${it.id},'qtyPerPc',this.value${xs})">
+      <button class="amort-btn${it.amort?' on':''}" onclick="updPurchItem(${it.id},'amort',${!it.amort}${xs})"
+        title="${it.amort?'批次總費用÷訂單量':'單價×用量（固定/件）'}">${it.amort?'批次攤提':'固定/件'}</button>
+      <span class="purch-sub" id="${_psid(ia,it.id)}">${subLabel}</span>
+      <button class="purch-del" onclick="removePurchItem(${it.id}${xs})">×</button>
+    </div>`;
+  }).join('');
+
+  const grandTotal = r2(st.purchItems.reduce((s,it) => {
+    const lt = (it.unitPrice||0)*(it.qtyPerPc||1);
+    return s + (it.amort ? lt/aqty : lt);
+  }, 0));
+  if (total) {
+    total.style.display = 'block';
+    total.innerHTML = `外購合計 @ ${aqty} pcs：<strong>NT$ ${grandTotal.toLocaleString('zh-TW',{minimumFractionDigits:1,maximumFractionDigits:1})} / pc</strong>`;
+  }
+  recalc();
+}
+function addPurchItem(ia) {
+  ia = !!ia;
+  const st = _pst(ia);
+  st.purchItems.push({id: st.nextPurchId++, name:'', unitPrice:0, qtyPerPc:1, amort:true});
+  renderPurchItems(ia);
+}
+function removePurchItem(id, ia) {
+  ia = !!ia;
+  const st = _pst(ia);
+  st.purchItems = st.purchItems.filter(it=>it.id!==id);
+  renderPurchItems(ia);
+}
+function updPurchItem(id, field, val, ia) {
+  ia = !!ia;
+  const st = _pst(ia);
+  const it = st.purchItems.find(it=>it.id===id);
+  if (!it) return;
+  if (field === 'amort') {
+    it.amort = (val === true || val === 'true');
+    renderPurchItems(ia); return;
+  }
+  it[field] = ['unitPrice','qtyPerPc'].includes(field) ? (parseFloat(val)||0) : val;
+  const aqty = G.activeQty || (G.qtys.length ? Math.min(...G.qtys) : 1);
+  const lineTotal = (it.unitPrice||0)*(it.qtyPerPc||1);
+  const sub = it.amort ? r2(lineTotal/aqty) : r2(lineTotal);
+  const subEl = document.getElementById(_psid(ia, id));
+  if (subEl) subEl.innerHTML = it.amort
+    ? `NT$ ${sub.toLocaleString('zh-TW',{minimumFractionDigits:1,maximumFractionDigits:1})} <span style="font-weight:400;color:var(--tx3);font-size:9.5px;">@${aqty}pc</span>`
+    : `NT$ ${sub.toLocaleString('zh-TW',{minimumFractionDigits:1,maximumFractionDigits:1})}`;
+  const grandTotal = r2(st.purchItems.reduce((s,it2) => {
+    const lt = (it2.unitPrice||0)*(it2.qtyPerPc||1);
+    return s + (it2.amort ? lt/aqty : lt);
+  }, 0));
+  const totalEl = _pel(ia, 'total');
+  if (totalEl) {
+    totalEl.style.display = 'block';
+    totalEl.innerHTML = `外購合計 @ ${aqty} pcs：<strong>NT$ ${grandTotal.toLocaleString('zh-TW',{minimumFractionDigits:1,maximumFractionDigits:1})} / pc</strong>`;
+  }
+  recalc();
+}
+
+// ══════════════════════════════════════════════════════
+// MODE & ASSEMBLY
+// ══════════════════════════════════════════════════════
+function setMode(m) {
+  MODE = m;
+  document.getElementById('single-cards').style.display  = m==='single'   ? '' : 'none';
+  document.getElementById('asm-cards').style.display     = m==='assembly' ? '' : 'none';
+  document.getElementById('tab-bar-card').style.display  = m==='single'   ? '' : 'none';
+  document.getElementById('modeBtn1').className = m==='single'   ? 'active' : '';
+  document.getElementById('modeBtn2').className = m==='assembly' ? 'active' : '';
+  if (m==='assembly') renderAssembly();
+  recalc();
+}
+
+function addWorkpiece() {
+  const id = A.nextWpId++;
+  A.workpieces.push({
+    id, name: `工件 ${id}`, partNo: '', material: '', surface: '',
+    qtyPerUnit: 1, collapsed: false, procs: [], nextId: 1,
+    matTiers: [{qty:null, price:0}], matSetupQty: 0,
+  });
+  renderAssembly(); recalc();
+}
+
+function removeWorkpiece(id) {
+  A.workpieces = A.workpieces.filter(w=>w.id!==id);
+  renderAssembly(); recalc();
+}
+
+function toggleWpCollapse(id) {
+  const wp = A.workpieces.find(w=>w.id===id);
+  if (!wp) return;
+  wp.collapsed = !wp.collapsed;
+  const body  = document.getElementById(`wpbody_${id}`);
+  const arrow = document.getElementById(`wparr_${id}`);
+  if (body)  body.classList.toggle('collapsed',  wp.collapsed);
+  if (arrow) arrow.classList.toggle('open', !wp.collapsed);
+  if (!wp.collapsed) renderProcs(wp);
+}
+
+function updWp(id, field, val) {
+  const wp = A.workpieces.find(w=>w.id===id);
+  if (!wp) return;
+  wp[field] = (field==='qtyPerUnit'||field==='matSetupQty') ? (parseFloat(val)||0) : val;
+  recalc();
+}
+
+function escH(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+function renderAssembly() {
+  const list = document.getElementById('wpList');
+  if (!list) return;
+
+  if (!A.workpieces.length) {
+    list.innerHTML = '<div class="asm-empty">尚無工件，請點選「＋ 新增工件」開始</div>';
+    return;
+  }
+
+  list.innerHTML = A.workpieces.map((wp, idx) => {
+    const matTiersHtml = wp.matTiers.map((t,i) => `
+      <div class="tier-row">
+        <input type="number" placeholder="數量 pcs (留空=固定)" value="${t.qty||''}" min="1"
+          oninput="updMatTier(${i},'qty',this.value,${wp.id})">
+        <input type="number" placeholder="NTD / pc" value="${t.price||''}" min="0"
+          oninput="updMatTier(${i},'price',this.value,${wp.id})">
+        <button class="tier-del" onclick="delMatTier(${i},${wp.id})">×</button>
+      </div>`).join('');
+
+    return `<div class="wp-card" id="wpc_${wp.id}">
+      <div class="wp-card-hd" onclick="toggleWpCollapse(${wp.id})">
+        <span class="wp-label">WP${String(idx+1).padStart(2,'0')}</span>
+        <div class="wp-inputs" onclick="event.stopPropagation()">
+          <input type="text" class="wp-name" placeholder="工件名稱" value="${escH(wp.name||'')}"
+            oninput="updWp(${wp.id},'name',this.value)">
+          <input type="text" class="wp-partno" placeholder="料號 Part No." value="${escH(wp.partNo||'')}"
+            oninput="updWp(${wp.id},'partNo',this.value)">
+          <input type="text" class="wp-mat" placeholder="材料 Material" value="${escH(wp.material||'')}"
+            oninput="updWp(${wp.id},'material',this.value)">
+          <span class="wp-qty-lbl">每組用量</span>
+          <input type="number" class="wp-qty" value="${wp.qtyPerUnit||1}" min="1" step="1"
+            oninput="updWp(${wp.id},'qtyPerUnit',this.value)">
+          <span class="wp-qty-lbl">pcs/set</span>
+        </div>
+        <button class="wp-del" onclick="event.stopPropagation();removeWorkpiece(${wp.id})" title="刪除此工件">×</button>
+        <span class="wp-arrow${wp.collapsed?'':' open'}" id="wparr_${wp.id}">▼</span>
+      </div>
+      <div class="wp-body${wp.collapsed?' collapsed':''}" id="wpbody_${wp.id}">
+        <div class="wp-section">
+          <div class="wp-sec-hd">材料成本 Material Cost</div>
+          <label style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:5px;">
+            數量級距單價 (NTD/pc) &nbsp;—&nbsp;
+            <span style="font-weight:400;text-transform:none;letter-spacing:0;">留空=固定單價</span>
+          </label>
+          <div class="tier-rows" id="wp${wp.id}_matTierList">${matTiersHtml}</div>
+          <button class="add-tier" onclick="addMatTier(${wp.id})" style="margin-top:4px;">＋ 新增價格級距</button>
+          <div style="margin-top:9px;display:flex;align-items:center;gap:9px;">
+            <label style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;white-space:nowrap;">架機數量 (pcs)</label>
+            <input type="number" id="wp${wp.id}_matSetupQty" value="${wp.matSetupQty||''}" min="0" step="1"
+              placeholder="留空=依訂單量"
+              style="width:110px;padding:5px 8px;border:1px solid var(--bdr2);border-radius:var(--rx);font-size:12px;background:var(--surf2);color:var(--tx);font-family:var(--ffm);"
+              oninput="updWp(${wp.id},'matSetupQty',this.value)">
+          </div>
+        </div>
+        <div class="wp-section">
+          <div class="wp-sec-hd">
+            製程途層 Process Routing
+            <span class="badge" id="wp${wp.id}_opBadge">${wp.procs.length} 道</span>
+          </div>
+          <div class="proc-list" id="wp${wp.id}_procList"></div>
+          <button class="add-op" onclick="addProc(${wp.id})" style="margin-top:4px;">＋ 新增製程步驟</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  A.workpieces.forEach(wp => { if (!wp.collapsed) renderProcs(wp); });
+}
+
+function getTierPrice(tiers, qty) {
+  const withQty = tiers.filter(t=>t.qty>0 && t.price>0).sort((a,b)=>a.qty-b.qty);
+  const flat    = tiers.find(t=>(!t.qty||t.qty<=0) && t.price>0);
+  if (!withQty.length) return flat ? flat.price : 0;
+  let p = withQty[0].price;
+  for (const t of withQty) { if (qty >= t.qty) p = t.price; }
+  return p;
+}
+
+function calcQty(qty, tab) {
+  tab = tab || S;
+  const er = parseFloat(document.getElementById('exchangeRate').value) || 30;
+  const matSetupQty = tab.matSetupQty || 0;
+  const matUnitPrice = getTierPrice(tab.matTiers, qty);
+  const mat = (matSetupQty > 0 && qty > 0)
+    ? r2((qty + matSetupQty) * matUnitPrice / qty)
+    : matUnitPrice;
+
+  const pur = r2(tab.purchItems.reduce((s,it) => {
+    const lt = (it.unitPrice||0)*(it.qtyPerPc||1);
+    return s + (it.amort ? (qty > 0 ? lt/qty : 0) : lt);
+  }, 0));
+
+  let inhouse = 0, setupPerPc = 0, outsource = 0;
+  for (const proc of tab.procs) {
+    if (proc.type === 'inhouse') {
+      const m = MACH_MAP[proc.machId];
+      if (m) {
+        inhouse += (proc.timeMin||0) * m.perMin;
+        const sh = getSetupHrs(proc);
+        if (sh > 0 && m.setupHrUSD > 0) setupPerPc += (sh * m.setupHrUSD * er) / qty;
+      }
+    } else {
+      outsource += getTierPrice(proc.tiers, qty);
+    }
+  }
+
+  const ot = (tab.ot_knife||0)+(tab.ot_fixture||0)+(tab.ot_mold||0)+(tab.ot_other||0);
+  const otPerPc = qty > 0 ? ot / qty : 0;
+
+  const baseTotal = mat + pur + inhouse + outsource + setupPerPc + otPerPc;
+  const commOn    = document.getElementById('commissionOn').checked;
+  const commission = commOn ? r2(baseTotal * 0.05) : 0;
+  const total  = baseTotal + commission;
+  const margin = getMarginForQty(qty);
+  const priceUSD  = parseFloat(((total / er) / (1 - margin)).toFixed(2));
+  const priceNTD  = r2(priceUSD * er);
+
+  return {
+    mat:r2(mat), pur:r2(pur), inhouse:r2(inhouse), outsource:r2(outsource),
+    setup:r2(setupPerPc), ot:r2(otPerPc), commission:r2(commission),
+    total:r2(total), margin, er, priceUSD, priceNTD, orderValUSD:r2(priceUSD*qty),
+  };
+}
+
+function r2(n){ return Math.round(n*100)/100; }
+function ntd(n){ return n.toLocaleString('zh-TW',{minimumFractionDigits:1,maximumFractionDigits:1}); }
+
+// Visual cost breakdown bars
+function makeBars(r) {
+  const total = r.total || 0.01;
+  const items = [
+    { label:'材料成本', pct:r.mat/total*100,     cls:'mat',  val:r.mat },
+    { label:'廠內加工', pct:r.inhouse/total*100,  cls:'proc', val:r.inhouse },
+    { label:'廠外製程', pct:r.outsource/total*100,cls:'os',   val:r.outsource },
+    { label:'外購物料', pct:r.pur/total*100,      cls:'misc', val:r.pur },
+    { label:'設定+攤提',pct:(r.setup+r.ot)/total*100,cls:'misc',val:r2(r.setup+r.ot) },
+  ].filter(i => i.val > 0);
+  if (!items.length) return '';
+  return `<div class="cost-bars">${items.map(i=>`
+    <div class="bar-row">
+      <span class="bar-label">${i.label}</span>
+      <div class="bar-track"><div class="bar-fill ${i.cls}" style="width:${Math.min(Math.max(i.pct,0),100).toFixed(1)}%"></div></div>
+      <span class="bar-val">NT$${ntd(i.val)}</span>
+    </div>`).join('')}</div>`;
+}
+
+// ══════════════════════════════════════════════════════
+// ASSEMBLY CALCULATION
+// ══════════════════════════════════════════════════════
+function calcAssemblySet(qty) {
+  const er = parseFloat(document.getElementById('exchangeRate').value) || 30;
+  let matPerSet = 0, inhousePerSet = 0, setupPerSet = 0, outsourcePerSet = 0;
+
+  for (const wp of A.workpieces) {
+    const N = wp.qtyPerUnit || 1;
+    const pieceQty = qty * N;
+    const matSetupQty = wp.matSetupQty || 0;
+    const matUnitPrice = getTierPrice(wp.matTiers, qty);
+    const matPerPc = (matSetupQty > 0 && pieceQty > 0)
+      ? r2((pieceQty + matSetupQty) * matUnitPrice / pieceQty)
+      : matUnitPrice;
+    matPerSet += matPerPc * N;
+    for (const proc of wp.procs) {
+      if (proc.type === 'inhouse') {
+        const m = MACH_MAP[proc.machId];
+        if (m) {
+          inhousePerSet += (proc.timeMin||0) * m.perMin * N;
+          const sh = proc.setupHrs || 0;
+          if (sh > 0 && m.setupHrUSD > 0) setupPerSet += (sh * m.setupHrUSD * er) / qty;
+        }
+      } else {
+        outsourcePerSet += getTierPrice(proc.tiers, qty) * N;
+      }
+    }
+  }
+
+  const purPerSet = r2(A.purchItems.reduce((s,it) => {
+    const lt = (it.unitPrice||0)*(it.qtyPerPc||1);
+    return s + (it.amort ? (qty > 0 ? lt/qty : 0) : lt);
+  }, 0));
+
+  const ot = ['ot_knife','ot_fixture','ot_mold','ot_other']
+    .reduce((s,id)=> s + (parseFloat(document.getElementById(id).value)||0), 0);
+  const otPerSet = qty > 0 ? ot / qty : 0;
+
+  const baseTotal  = r2(matPerSet + purPerSet + inhousePerSet + outsourcePerSet + setupPerSet + otPerSet);
+  const commOn     = document.getElementById('commissionOn').checked;
+  const commission = commOn ? r2(baseTotal * 0.05) : 0;
+  const total      = r2(baseTotal + commission);
+  const margin = getMarginForQty(qty);
+  const priceUSD = parseFloat(((total / er) / (1 - margin)).toFixed(2));
+  const priceNTD = r2(priceUSD * er);
+
+  return {
+    mat:r2(matPerSet), pur:r2(purPerSet), inhouse:r2(inhousePerSet),
+    outsource:r2(outsourcePerSet), setup:r2(setupPerSet), ot:r2(otPerSet),
+    commission:r2(commission), total, margin, er, priceUSD, priceNTD,
+    orderValUSD:r2(priceUSD*qty),
+  };
+}
+
+function recalc() {
+  if (MODE === 'assembly') {
+    const rb = document.getElementById('resultsBody');
+    const wpCount    = A.workpieces.length;
+    const totalProcs = A.workpieces.reduce((s,w)=>s+w.procs.length, 0);
+    const qtys       = [...G.qtys].sort((a,b)=>a-b);
+
+    if (!wpCount) { rb.innerHTML = `<div class="empty-hint">請先新增工件</div>`; return; }
+    if (!totalProcs) { rb.innerHTML = `<div class="empty-hint">請為工件新增製程步驟</div>`; return; }
+    if (!qtys.length) { rb.innerHTML = `<div class="empty-hint">請設定數量級距</div>`; return; }
+
+    if (!G.activeQty || !qtys.includes(G.activeQty)) G.activeQty = qtys[0];
+
+    const pn = document.getElementById('partNo').value   || '—';
+    const cu = document.getElementById('customer').value || '—';
+    const r  = calcAssemblySet(G.activeQty);
+
+    const tabs = qtys.map(q=>
+      `<button class="qty-tab${q===G.activeQty?' active':''}" onclick="setAQty(${q})">${q.toLocaleString()} sets</button>`
+    ).join('');
+
+    const allRows = qtys.map(q => {
+      const qr = calcAssemblySet(q);
+      const _isC = G.qtyMargins[q] != null;
+      return `<tr class="${q===G.activeQty?'active-row':''}">
+        <td>${q.toLocaleString()}</td>
+        <td>${ntd(qr.total)}</td>
+        <td style="font-weight:700;">USD $${qr.priceUSD.toFixed(2)}</td>
+        <td><span class="mgn-badge${_isC?' mgn-custom':''}">${(qr.margin*100).toFixed(1)}%</span></td>
+        <td>USD $${qr.orderValUSD.toFixed(2)}</td>
+      </tr>`;
+    }).join('');
+
+    const wpBreakdown = A.workpieces.length > 1 ? (() => {
+      const wpCosts = A.workpieces.map(wp => {
+        const N = wp.qtyPerUnit || 1;
+        const mat = r2(getTierPrice(wp.matTiers, G.activeQty) * N);
+        const inh = r2(wp.procs.filter(p=>p.type==='inhouse').reduce((s,p)=>{
+          const m = MACH_MAP[p.machId]; return s + (p.timeMin||0)*(m?m.perMin:0);
+        },0) * N);
+        const out = r2(wp.procs.filter(p=>p.type==='outsource').reduce((s,p)=>{
+          return s + getTierPrice(p.tiers, G.activeQty) * N;
+        },0));
+        return mat + inh + out;
+      });
+      const totalWpCost = wpCosts.reduce((a,b)=>a+b,0) || 1;
+      return A.workpieces.map((wp, idx) => {
+        const N = wp.qtyPerUnit || 1;
+        const pct = (wpCosts[idx] / totalWpCost * 100);
+        return `<tr>
+          <td style="color:var(--acc);font-weight:700;white-space:nowrap;">WP${String(idx+1).padStart(2,'0')}</td>
+          <td>${wp.name||'—'} ×${N}</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div style="flex:1;height:4px;background:rgba(255,255,255,.08);border-radius:2px;min-width:60px;">
+                <div style="width:${pct.toFixed(1)}%;height:100%;background:var(--acc);border-radius:2px;"></div>
+              </div>
+              <span style="min-width:38px;text-align:right;font-variant-numeric:tabular-nums;">${pct.toFixed(1)}%</span>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    })() : '';
+
+    rb.innerHTML = `
+      <div class="r-meta">
+        <span>料號: <strong>${pn}</strong></span>
+        <span>客戶: <strong>${cu}</strong></span>
+        <span>工件數: <strong>${wpCount}</strong></span>
+        <span>製程總數: <strong>${totalProcs}</strong></span>
+      </div>
+      <div class="qty-tabs">${tabs}</div>
+      ${makeBars(r)}
+      <table class="cost-tbl">
+        <tr><td>材料成本 Material</td>         <td>NT$ ${ntd(r.mat)}</td></tr>
+        <tr><td>外購物料 Purchased Parts</td>   <td>NT$ ${ntd(r.pur)}</td></tr>
+        <tr><td>廠內加工 In-house Machining</td><td>NT$ ${ntd(r.inhouse)}</td></tr>
+        <tr><td>廠外製程 Outsourced Proc.</td>  <td>NT$ ${ntd(r.outsource)}</td></tr>
+        <tr><td>設定費攤提 Setup Amort.</td>    <td>NT$ ${ntd(r.setup)}</td></tr>
+        <tr><td>一次性費攤提 Tooling Amort.</td><td>NT$ ${ntd(r.ot)}</td></tr>
+        ${r.commission > 0 ? `<tr><td style="color:var(--amb);">佣金 Commission (5%)</td><td style="color:var(--amb);">NT$ ${ntd(r.commission)}</td></tr>` : ''}
+        <tr class="row-total">
+          <td><strong>總成本/組 Total Cost/set</strong></td>
+          <td>NT$ ${ntd(r.total)}</td>
+        </tr>
+        <tr><td>毛利率 Gross Margin</td><td><span class="mgn-badge">${(r.margin*100).toFixed(1)}%</span></td></tr>
+        <tr class="row-price">
+          <td><strong>建議售價/組 Unit Price/set</strong></td>
+          <td><strong>USD $${r.priceUSD.toFixed(2)}</strong></td>
+        </tr>
+        <tr><td style="font-size:11px;color:var(--tx3);">換算 NTD（× ${r.er}）</td>
+            <td style="font-size:11px;color:var(--tx3);">≈ NT$ ${r.priceNTD.toLocaleString()}</td></tr>
+        <tr class="row-order">
+          <td style="font-size:11px;color:var(--tx3);">× ${G.activeQty.toLocaleString()} sets 級距總額</td>
+          <td>USD $${r.orderValUSD.toFixed(2)}</td>
+        </tr>
+      </table>
+      <div class="divider"></div>
+      <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px;">各級距售價總覽 All-Tier Summary</div>
+      <table class="sum-tbl">
+        <thead><tr>
+          <th>Qty (sets)</th><th>成本 NT$/set</th><th>售價 USD/set</th><th>毛利</th><th>總額 USD</th>
+        </tr></thead>
+        <tbody>${allRows}</tbody>
+      </table>
+      ${A.workpieces.length > 1 ? `
+      <div class="divider"></div>
+      <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px;">工件成本拆解 @ ${G.activeQty} sets</div>
+      <table class="sum-tbl">
+        <thead><tr>
+          <th style="text-align:left;">工件</th><th style="text-align:left;">名稱 × 用量</th>
+          <th style="text-align:left;">成本佔比</th>
+        </tr></thead>
+        <tbody>${wpBreakdown}</tbody>
+      </table>` : ''}
+    `;
+    return;
+  }
+
+  const qtys = [...G.qtys].sort((a,b)=>a-b);
+  const rb   = document.getElementById('resultsBody');
+
+  if (!qtys.length || !S.procs.length) {
+    rb.innerHTML = `<div class="empty-hint">${!S.procs.length
+      ? '尚未輸入製程資料<br>請點選「新增製程步驟」開始'
+      : '請設定數量級距'}</div>`;
+    return;
+  }
+
+  if (!G.activeQty || !qtys.includes(G.activeQty)) G.activeQty = qtys[0];
+
+  const pn  = document.getElementById('partNo').value   || '—';
+  const cu  = document.getElementById('customer').value || '—';
+  const mat = document.getElementById('material').value || '—';
+  const r   = calcQty(G.activeQty);
+
+  const tabs = qtys.map(q=>
+    `<button class="qty-tab${q===G.activeQty?' active':''}" onclick="setAQty(${q})">${q.toLocaleString()} pcs</button>`
+  ).join('');
+
+  const allRows = qtys.map(q => {
+    const qr = calcQty(q);
+    const _isC = G.qtyMargins[q] != null;
+    return `<tr class="${q===G.activeQty?'active-row':''}">
+      <td>${q.toLocaleString()}</td>
+      <td>${ntd(qr.total)}</td>
+      <td style="font-weight:700;">USD $${qr.priceUSD.toFixed(2)}</td>
+      <td><span class="mgn-badge${_isC?' mgn-custom':''}">${(qr.margin*100).toFixed(1)}%</span></td>
+      <td>USD $${qr.orderValUSD.toFixed(2)}</td>
+    </tr>`;
+  }).join('');
+
+  rb.innerHTML = `
+    <div class="r-meta">
+      <span>料號: <strong>${pn}</strong></span>
+      <span>客戶: <strong>${cu}</strong></span>
+      <span>材料: <strong>${mat}</strong></span>
+      <span>製程數: <strong>${S.procs.length}</strong></span>
+    </div>
+    <div class="qty-tabs">${tabs}</div>
+    ${makeBars(r)}
+    <table class="cost-tbl">
+      <tr><td>材料成本 Material</td>         <td>NT$ ${ntd(r.mat)}</td></tr>
+      <tr><td>外購物料 Purchased Parts</td>   <td>NT$ ${ntd(r.pur)}</td></tr>
+      <tr><td>廠內加工 In-house Machining</td><td>NT$ ${ntd(r.inhouse)}</td></tr>
+      <tr><td>廠外製程 Outsourced Proc.</td>  <td>NT$ ${ntd(r.outsource)}</td></tr>
+      <tr><td>設定費攤提 Setup Amort.</td>    <td>NT$ ${ntd(r.setup)}</td></tr>
+      <tr><td>一次性費攤提 Tooling Amort.</td><td>NT$ ${ntd(r.ot)}</td></tr>
+      ${r.commission > 0 ? `<tr><td style="color:var(--amb);">佣金 Commission (5%)</td><td style="color:var(--amb);">NT$ ${ntd(r.commission)}</td></tr>` : ''}
+      <tr class="row-total">
+        <td><strong>總成本/件 Total Cost</strong></td>
+        <td>NT$ ${ntd(r.total)}</td>
+      </tr>
+      <tr><td>毛利率 Gross Margin</td><td><span class="mgn-badge">${(r.margin*100).toFixed(1)}%</span></td></tr>
+      <tr class="row-price">
+        <td><strong>建議售價/件 Unit Price</strong></td>
+        <td><strong>USD $${r.priceUSD.toFixed(2)}</strong></td>
+      </tr>
+      <tr><td style="font-size:11px;color:var(--tx3);">換算 NTD（× ${r.er}）</td>
+          <td style="font-size:11px;color:var(--tx3);">≈ NT$ ${r.priceNTD.toLocaleString()}</td></tr>
+      <tr class="row-order">
+        <td style="font-size:11px;color:var(--tx3);">× ${G.activeQty.toLocaleString()} pcs 級距總額</td>
+        <td>USD $${r.orderValUSD.toFixed(2)}</td>
+      </tr>
+    </table>
+    <div class="divider"></div>
+    <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px;">各級距售價總覽 All-Tier Summary</div>
+    <table class="sum-tbl">
+      <thead><tr>
+        <th>Qty</th><th>成本 NT$/pc</th><th>售價 USD/pc</th><th>毛利</th><th>總額 USD</th>
+      </tr></thead>
+      <tbody>${allRows}</tbody>
+    </table>
+  `;
+  if(TABS.length > 1){
+    const qtyHeaders = qtys.map(q=>`<th>${q.toLocaleString()}</th>`).join('');
+    const tabRows = TABS.map(tab=>{
+      const isActive = tab.id===activeTabId;
+      const cells = qtys.map(q=>{
+        if(!tab.procs.length) return `<td style="color:var(--tx3);">—</td>`;
+        const qr = calcQty(q,tab);
+        return `<td${isActive?' style="color:var(--acc);font-weight:700;"':''}>$${qr.priceUSD.toFixed(2)}</td>`;
+      }).join('');
+      return `<tr${isActive?' class="active-row"':''}><td style="color:var(--acc);font-weight:700;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escH(tabLabel(tab))}</td>${cells}</tr>`;
+    }).join('');
+    rb.innerHTML += `<div class="divider"></div>
+    <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px;">各工件售價總覽 Multi-Part USD/pc</div>
+    <table class="sum-tbl"><thead><tr><th>工件</th>${qtyHeaders}</tr></thead><tbody>${tabRows}</tbody></table>`;
+  }
+}
+
+function setAQty(q) { G.activeQty = q; recalc(); }
+
+
+// ══════════════════════════════════════════════════════
+// EXCEL EXPORT
+// ══════════════════════════════════════════════════════
+function buildTabRows(tab, qtys, rfqNo, cu, er, modeStr, diffLbl, today) {
+  const rows = [];
+  const sec = t => { rows.push([]); rows.push([`■ ${t}`]); };
+  const kv  = (k, v) => rows.push([k, v]);
+  rows.push(['ACHB RFQ 製程估價單']);
+  rows.push([`匯出日期: ${today}`]);
+  sec('基本資訊 Basic Information');
+  kv('RFQ 單號',            rfqNo || '—');
+  kv('客戶 Customer',       cu    || '—');
+  kv('料號 Part No.',       tab.partNo   || '—');
+  kv('版本 Revision',       tab.revision || '—');
+  kv('材料 Material',       tab.material || '—');
+  kv('表面處理 Surface',     tab.surface  || '—');
+  kv('設定費模式',           modeStr);
+  kv('匯率 (NTD/USD)',       er);
+  kv('難度 / 毛利',          diffLbl);
+  kv('架機數量（材料批量）', tab.matSetupQty > 0 ? `${tab.matSetupQty} pcs` : '依訂單量');
+  sec('製程途層 Process Routing');
+  rows.push(['序號','類型','機台 / 製程','費率(NTD/min)','加工時間(min/pc)','加工成本(NTD/pc)','設定時間(hr)','設定費/件公式','廠商','級距報價']);
+  tab.procs.forEach((proc, idx) => {
+    const opN = `OP${String(idx+1).padStart(2,'0')}`;
+    if (proc.type === 'inhouse') {
+      const m = MACH_MAP[proc.machId];
+      const machCost = r2((proc.timeMin||0) * (m ? m.perMin : 0));
+      const sh = proc.setupHrs || 0;
+      const setupRate = m ? m.setupHrUSD : 0;
+      const setupFormula = (sh > 0 && setupRate > 0) ? `${sh}hr × $${setupRate} × ${er} ÷ 訂單量` : '—';
+      rows.push([opN,'廠內',m?m.label:'',m?m.perMin:'',proc.timeMin||0,machCost,sh,setupFormula,'','']);
+    } else {
+      const tierStr = proc.tiers.filter(t=>t.qty>0&&t.price>0).map(t=>`${t.qty}pcs → NT$${t.price}`).join(' / ');
+      rows.push([opN,'廠外',proc.name||'','','','','','',proc.vendor||'',tierStr]);
+    }
+  });
+  sec('材料成本 Material Cost');
+  rows.push(['數量 (pcs)','NTD / pc']);
+  tab.matTiers.filter(t=>t.price>0).forEach(t=>rows.push([t.qty?`${t.qty} pcs`:'固定單價',t.price]));
+  if (tab.matSetupQty > 0) kv('採購批量說明',`訂單量不足 ${tab.matSetupQty} pcs 時仍按此批量計料`);
+  sec('外購物料清單 Purchased Parts');
+  if (tab.purchItems.length) {
+    rows.push(['品項名稱','單價 (NTD)','用量/件','計算方式',...qtys.map(q=>`小計@${q}pc (NTD/pc)`)]);
+    tab.purchItems.forEach(it=>{
+      const md=it.amort?'批次攤提 (÷訂單量)':'固定/件';
+      rows.push([it.name||'',it.unitPrice||0,it.qtyPerPc||1,md,...qtys.map(q=>{const lt=(it.unitPrice||0)*(it.qtyPerPc||1);return r2(it.amort?lt/q:lt);})]);
+    });
+    qtys.forEach(q=>{const pt=r2(tab.purchItems.reduce((s,it)=>{const lt=(it.unitPrice||0)*(it.qtyPerPc||1);return s+(it.amort?lt/q:lt);},0));kv(`外購合計@${q}pcs`,pt);});
+  } else { rows.push(['（無外購品項）']); }
+  sec('刀具 / 治具 / 一次性費用 One-time Costs');
+  kv('刀具費 Tooling (NTD)', tab.ot_knife||0);
+  kv('治具費 Fixture (NTD)', tab.ot_fixture||0);
+  kv('模具費 Mold (NTD)',    tab.ot_mold||0);
+  kv('其他 Others (NTD)',    tab.ot_other||0);
+  kv('合計 Total (NTD)',     (tab.ot_knife||0)+(tab.ot_fixture||0)+(tab.ot_mold||0)+(tab.ot_other||0));
+  sec('各級距報價結果 Quote Results');
+  rows.push(['數量(pcs)','材料(NTD)','外購(NTD)','廠內加工(NTD)','廠外製程(NTD)','設定費攤提(NTD)','一次性攤提(NTD)','總成本/件(NTD)','毛利率(%)','建議售價(USD)','換算NTD','級距總額(USD)']);
+  for (const qty of qtys) {
+    const r = calcQty(qty, tab);
+    rows.push([qty,r.mat,r.pur,r.inhouse,r.outsource,r.setup,r.ot,r.total,parseFloat((r.margin*100).toFixed(1)),r.priceUSD,r.priceNTD,r.orderValUSD]);
+  }
+  return rows;
+}
+
+function buildAssemblyRows(qtys, rfqNo, cu, er, diffLbl, today) {
+  const rows = [];
+  const h = s => [s];
+  rows.push(['ACHB RFQ 組合件估價']);
+  rows.push([]);
+  rows.push(['RFQ No.', rfqNo||'—', '', '客戶', cu||'—']);
+  rows.push(['日期', today, '', '匯率', `NT$ ${er}`]);
+  rows.push(['毛利設定', diffLbl]);
+  rows.push([]);
+  rows.push(['=== 工件明細 ===']);
+  A.workpieces.forEach(wp => {
+    rows.push([]);
+    rows.push([`WP${wp.id} — ${wp.partNo||'(未填料號)'}`, `材料: ${wp.material||'—'}`, `每組用量: ${wp.qtyPerUnit||1} pcs/set`]);
+    if (wp.procs.length) {
+      rows.push(['  製程', '機台', '加工時間', 'NT$/pc']);
+      wp.procs.forEach((p, i) => {
+        const opN = `  OP${String(i+1).padStart(2,'0')}`;
+        if (p.type === 'inhouse') {
+          const m = MACH_MAP[p.machId];
+          rows.push([opN, m?m.label:'—', `${p.timeMin||0} min/pc`, m?`NT$${((p.timeMin||0)*m.perMin).toFixed(1)}/pc`:'—']);
+        } else {
+          const tierStr = (p.tiers||[]).map(t=>`${t.qty?t.qty+'pcs':'>0'}: NT$${t.price}`).join(' / ');
+          rows.push([opN, '廠外委外', '級距報價', tierStr]);
+        }
+      });
+    } else {
+      rows.push(['  (無製程)']);
+    }
+    const matStr = (wp.matTiers||[]).filter(t=>t.price>0).map(t=>t.qty?`${t.qty}pcs: NT$${t.price}`:`固定: NT$${t.price}`).join(' / ');
+    if (matStr) rows.push(['  材料成本', matStr]);
+  });
+  rows.push([]);
+  rows.push(['=== 各級距報價彙總 ===']);
+  rows.push([]);
+  rows.push(['數量(sets)','材料(NT)','廠內加工(NT)','廠外製程(NT)','外購物料(NT)','設定+攤提(NT)','一次費(NT)','成本合計(NT)','毛利率','售價 USD/set','訂單金額 USD']);
+  qtys.forEach(q => {
+    const r = calcAssemblySet(q);
+    rows.push([q, r.mat, r.inhouse, r.outsource, r.pur, r.setup, r2(r.ot||0), r.total,
+      `${(r.margin*100).toFixed(1)}%`, r.priceUSD.toFixed(2), r.orderValUSD.toFixed(2)]);
+  });
+  return rows;
+}
+
+function exportExcel() {
+  if (typeof XLSX === 'undefined') {
+    alert('Excel 匯出功能需要網路連線以載入 SheetJS 程式庫，請確認網路後重試。');
+    return;
+  }
+  const qtys = [...G.qtys].sort((a,b)=>a-b);
+  if (!qtys.length) { alert('請先設定數量級距再匯出。'); return; }
+
+  if (MODE === 'assembly') {
+    const hasProcs = A.workpieces.some(w=>w.procs.length>0);
+    if (!hasProcs) { alert('請先為工件新增製程步驟再匯出。'); return; }
+  } else {
+    const filledTabs = TABS.filter(t=>t.procs.length>0);
+    if (!filledTabs.length) { alert('請先輸入製程資料再匯出。'); return; }
+  }
+
+  const rfqNo  = document.getElementById('rfqNo').value.trim();
+  const cu     = document.getElementById('customer').value.trim();
+  const er     = parseFloat(document.getElementById('exchangeRate').value) || 30;
+  const modeStr = document.getElementById('setupMode').value === 'production' ? '量產' : '首次製作';
+  const diffEl  = document.getElementById('difficulty');
+  const diffLbl = diffEl.value==='custom' ? `自訂 ${document.getElementById('customMargin').value}%` : diffEl.options[diffEl.selectedIndex].text;
+  const today  = new Date().toLocaleDateString('zh-TW');
+  const wb = XLSX.utils.book_new();
+  const san = s => s.replace(/[\\/:*?"<>|\s]/g,'_');
+
+  if (MODE === 'assembly') {
+    const asmRows = buildAssemblyRows(qtys, rfqNo, cu, er, diffLbl, today);
+    const ws = XLSX.utils.aoa_to_sheet(asmRows);
+    ws['!cols'] = [{wch:16},{wch:14},{wch:16},{wch:16},{wch:14},{wch:16},{wch:14},{wch:16},{wch:10},{wch:16},{wch:16}];
+    XLSX.utils.book_append_sheet(wb, ws, '組合件 Assembly');
+    const fname = ([rfqNo, cu, 'Assembly'].filter(Boolean).map(san).join('_')||'RFQ_Assembly')+'.xlsx';
+    XLSX.writeFile(wb, fname);
+  } else {
+    const filledTabs = TABS.filter(t=>t.procs.length>0);
+    const colWidths = [{wch:28},{wch:18},{wch:22},{wch:14},{wch:14},{wch:14},{wch:14},{wch:26},{wch:16},{wch:36}];
+    filledTabs.forEach(tab => {
+      const rows = buildTabRows(tab, qtys, rfqNo, cu, er, modeStr, diffLbl, today);
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = colWidths;
+      const sheetName = (tab.partNo||`Part ${tab.id}`).substring(0,31);
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    });
+    if (filledTabs.length > 1) {
+      const sumRows = [['ACHB RFQ 多工件售價總覽'],['匯出日期: '+today],[],
+        ['工件','Part No.',...qtys.map(q=>`售價 USD @${q}pc`)]];
+      filledTabs.forEach(tab=>{
+        sumRows.push([tabLabel(tab), tab.partNo||'—', ...qtys.map(q=>calcQty(q,tab).priceUSD.toFixed(2))]);
+      });
+      const ws2 = XLSX.utils.aoa_to_sheet(sumRows);
+      ws2['!cols'] = [{wch:18},{wch:22},...qtys.map(()=>({wch:16}))];
+      XLSX.utils.book_append_sheet(wb, ws2, '總覽 Summary');
+    }
+    const fname = ([rfqNo, cu].filter(Boolean).map(san).join('_')||'RFQ_quote')+'.xlsx';
+    XLSX.writeFile(wb, fname);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// RFQ 單號
+// ══════════════════════════════════════════════════════
+function generateRfqNo() {
+  const now = new Date();
+  const dateStr = now.getFullYear().toString()
+    + String(now.getMonth()+1).padStart(2,'0')
+    + String(now.getDate()).padStart(2,'0');
+  let stored = { date: '', seq: 0 };
+  try { stored = JSON.parse(localStorage.getItem('achb_rfq_counter') || '{}'); } catch(e) {}
+  const seq = (stored.date === dateStr) ? (stored.seq||0) + 1 : 1;
+  localStorage.setItem('achb_rfq_counter', JSON.stringify({ date: dateStr, seq }));
+  return `RFQ${dateStr}${String(seq).padStart(3,'0')}`;
+}
+function regenerateRfqNo() {
+  document.getElementById('rfqNo').value = generateRfqNo();
+}
+
+// ══════════════════════════════════════════════════════
+// SAVE / LOAD
+// ══════════════════════════════════════════════════════
+function saveCalc() {
+  const rfqNo   = document.getElementById('rfqNo').value.trim();
+  const customer = document.getElementById('customer').value.trim();
+  const san2 = s => s.replace(/[\\/:*?"<>|\s]/g, '_');
+  const parts = [rfqNo, customer, S.partNo, S.revision].filter(Boolean).map(san2);
+  const filename = (parts.join('_') || 'RFQ_quote') + '.json';
+
+  const data = {
+    version: 3, savedAt: new Date().toISOString(), mode: MODE,
+    fields: {
+      rfqNo:        document.getElementById('rfqNo').value,
+      customer:     document.getElementById('customer').value,
+      exchangeRate: document.getElementById('exchangeRate').value,
+      difficulty:   document.getElementById('difficulty').value,
+      customMargin: document.getElementById('customMargin').value,
+      setupMode:    document.getElementById('setupMode').value,
+      commissionOn: document.getElementById('commissionOn').checked ? '1' : '0',
+    },
+    G, TABS, activeTabId, A,
+  };
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function loadCalc() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (!data.version || !data.fields) throw new Error('檔案格式不符');
+        Object.entries(data.fields).forEach(([id, val]) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          if (el.type === 'checkbox') el.checked = (val === '1');
+          else el.value = val;
+        });
+        toggleCustomMargin(); onCustomerChange();
+        if (data.version >= 2 && data.TABS) {
+          G = data.G; if (!G.qtyMargins) G.qtyMargins = {};
+          TABS = data.TABS; activeTabId = data.activeTabId;
+          nextTabId = Math.max(...TABS.map(t=>t.id)) + 1;
+          S = TABS.find(t=>t.id===activeTabId) || TABS[0];
+          A = data.A || {workpieces:[],nextWpId:1,purchItems:[],nextPurchId:1};
+        } else {
+          const ds = data.S || {};
+          G = { qtys: ds.qtys||[5,50,100], activeQty: ds.activeQty||null, qtyMargins:{} };
+          const tab = newTab(1);
+          tab.partNo    = data.fields.partNo    || '';
+          tab.revision  = data.fields.revision  || '';
+          tab.material  = data.fields.material  || '';
+          tab.surface   = data.fields.surface   || '';
+          tab.matSetupQty = parseFloat(data.fields.matSetupQty) || 0;
+          tab.ot_knife   = parseFloat(data.fields.ot_knife)   || 0;
+          tab.ot_fixture = parseFloat(data.fields.ot_fixture) || 0;
+          tab.ot_mold    = parseFloat(data.fields.ot_mold)    || 0;
+          tab.ot_other   = parseFloat(data.fields.ot_other)   || 0;
+          tab.procs      = ds.procs      || [];
+          tab.nextId     = ds.nextId     || 1;
+          tab.matTiers   = ds.matTiers   || [{qty:null,price:0}];
+          tab.purchItems = ds.purchItems || [];
+          tab.nextPurchId= ds.nextPurchId|| 1;
+          TABS=[tab]; activeTabId=1; nextTabId=2; S=tab;
+          A = data.A || {workpieces:[],nextWpId:1,purchItems:[],nextPurchId:1};
+        }
+        loadTabToDOM(S);
+        setMode(data.mode || 'single');
+        renderTabBar(); renderQtys(); renderMatTiers(); renderProcs(); renderPurchItems();
+        if (data.mode === 'assembly') renderAssembly();
+        recalc();
+        alert('✅ 已載入：' + file.name);
+      } catch (err) {
+        alert('載入失敗：' + err.message);
+      }
+    };
+    reader.readAsText(file, 'utf-8');
+  };
+  input.click();
+}
+
+// ══════════════════════════════════════════════════════
+// RESET
+// ══════════════════════════════════════════════════════
+function resetAll() {
+  if (!confirm('確定要清空所有資料？')) return;
+  G = { qtys:[5,50,100], activeQty:null, qtyMargins:{} };
+  TABS = [newTab(1)]; nextTabId = 2; activeTabId = 1; S = TABS[0];
+  A = { workpieces:[], nextWpId:1, purchItems:[], nextPurchId:1 };
+  document.getElementById('rfqNo').value = generateRfqNo();
+  document.getElementById('customer').value = '';
+  document.getElementById('exchangeRate').value = '30';
+  document.getElementById('difficulty').value = '0';
+  document.getElementById('setupMode').value = 'production';
+  document.getElementById('commissionOn').checked = false;
+  onCustomerChange(); toggleCustomMargin();
+  loadTabToDOM(S);
+  setMode('single');
+  renderTabBar(); renderQtys(); renderProcs(); renderMatTiers(); renderPurchItems();
+}
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+document.getElementById('exchangeRate').addEventListener('input', recalc);
+document.getElementById('setupMode').addEventListener('change', recalc);
+document.getElementById('newQty').addEventListener('keydown', e=>{ if(e.key==='Enter') addQty(); });
+
+// ══════════════════════════════════════════════════════
+// CUSTOMER LIST
+// ══════════════════════════════════════════════════════
+const CUSTOMERS=[
+  {name:'Abbott Molecular',                   code:'FAB03'},
+  {name:'Abbott POC',                         code:'FAB01'},
+  {name:'ADLINK (Boston Dynamics)',            code:'FAD01'},
+  {name:'ATL (Waters Milford)',                code:'FAT01'},
+  {name:'Boston Dynamics',                    code:'FBD01'},
+  {name:'C&B (Waters Milford)',               code:'FCB01'},
+  {name:'CEI (Waters UK)',                    code:'FCE01'},
+  {name:'Crosman Corporation',                code:'FYT01'},
+  {name:'ELBIT',                              code:'FEB01'},
+  {name:'EVERMAGNET (Waters Milford)',         code:'FMB01'},
+  {name:'Flex (Waters Milford)',              code:'FFT01'},
+  {name:'FLUID METERING',                     code:'FFM01'},
+  {name:'FU YU (Waters Milford)',             code:'FFY01'},
+  {name:'GDI (Waters Milford)',               code:'FGD01'},
+  {name:'GES (Waters Milford)',               code:'FGE01'},
+  {name:'GES (Waters UK)',                    code:'FGE02'},
+  {name:'Horstman',                           code:'FGK01'},
+  {name:'IVEK',                               code:'FIV01'},
+  {name:'Kingstec',                           code:'FKT01'},
+  {name:'Lucility',                           code:'FLS01'},
+  {name:'Pelham P. (Waters Milford)',          code:'FPP01'},
+  {name:'PKI (HOPKINTON,USA)',                code:'FPE04'},
+  {name:'PKI (Singapore & China)',            code:'FPE02'},
+  {name:'Schivo (Waters UK)',                 code:'FSV01'},
+  {name:'SL Corporation (Boston Dynamics)',   code:'FSL01'},
+  {name:'TA Instruments-Waters LLC',          code:'FTA01'},
+  {name:'Thermo Fisher (Dionex)',             code:'FTF02'},
+  {name:'Thermo Fisher (LPD-USA)',            code:'FTF01'},
+  {name:'Thermo Fisher (Suzhou)',             code:'FTF04'},
+  {name:'TRICONTINENT (Waters Milford)',       code:'FTC01'},
+  {name:'Waters Ireland (Waters UK)',          code:'FWT04'},
+  {name:'Waters Singapore (Waters Milford)',   code:'FWT02'},
+  {name:'Waters UK',                          code:'FWT03'},
+  {name:'緯創醫療 (Boston Dynamics)',           code:'DWT03'}
+];
+
+(function buildCustomerSelect(){
+  const sel = document.getElementById('customer');
+  const opt0 = document.createElement('option');
+  opt0.value=''; opt0.textContent='— 請選擇客戶 —'; sel.appendChild(opt0);
+  CUSTOMERS.forEach(c=>{
+    const o=document.createElement('option');
+    o.value=c.name; o.textContent=c.name+' — '+c.code;
+    sel.appendChild(o);
+  });
+})();
+
+function onCustomerChange(){
+  const name = document.getElementById('customer').value;
+  const badge = document.getElementById('custCodeBadge');
+  const match = CUSTOMERS.find(c=>c.name===name);
+  if(match && badge){badge.textContent=match.code;badge.style.display='inline';}
+  else if(badge){badge.style.display='none';}
+  recalc();
+}
+
+document.getElementById('rfqNo').value = generateRfqNo();
+renderTabBar();
+renderQtys();
+renderProcs();
+renderMatTiers();
+renderPurchItems();
+renderPurchItems(true);
+</script>
+</body>
+</html>
