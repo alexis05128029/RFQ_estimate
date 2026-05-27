@@ -1803,7 +1803,7 @@ function loadCalc() {
         }
         loadTabToDOM(S);
         setMode(data.mode || 'single');
-        renderTabBar(); renderQtys(); renderMatTiers(); renderProcs(); renderPurchItems();
+        renderTabBar(); renderQtys(); renderMatTiers(); renderProcs(); renderPurchItems(); renderPurchItems(true);
         if (data.mode === 'assembly') renderAssembly();
         recalc();
         alert('✅ 已載入：' + file.name);
