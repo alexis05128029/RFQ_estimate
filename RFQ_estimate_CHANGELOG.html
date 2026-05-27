@@ -74,6 +74,10 @@ code{background:#132030;border:1px solid #1C3050;padding:1px 6px;border-radius:3
           <span class="tag tag-fix">FIX</span>
           <div><strong>組合件模式：Excel 匯出功能異常</strong>：在組合件模式下點選「匯出 Excel」會直接彈出「請先輸入製程資料」的錯誤提示。原因是 <code>exportExcel()</code> 沿用單件模式的 <code>TABS</code> 判斷邏輯，在組合件模式下永遠回傳空陣列。現已新增 <code>buildAssemblyRows()</code> 函式，並將匯出邏輯依模式分流；組合件模式會輸出含工件明細與各級距報價彙總的單一 Sheet。</div>
         </li>
+        <li class="change-item fix">
+          <span class="tag tag-fix">FIX</span>
+          <div><strong>組合件模式：載入 JSON 後外購料清單不更新</strong>：以「載入 JSON」還原組合件模式的儲存檔後，「組合件外購料（共用）」卡片的項目清單不會重新顯示。原因是 <code>loadCalc()</code> 呼叫 <code>renderPurchItems()</code> 時未傳入 <code>true</code>，只更新了單件模式的外購料 UI。現已補上 <code>renderPurchItems(true)</code>，載入後清單可正確還原。</div>
+        </li>
       </ul>
     </div>
 
