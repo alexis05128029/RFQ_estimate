@@ -50,7 +50,7 @@ body{
 .mode-seg button.active{background:var(--acc);color:#041416;}
 .mode-seg button:hover:not(.active){background:var(--surf3);color:var(--tx);}
 
-.tb-controls{display:flex;align-items:stretch;flex:1;overflow-x:auto;overflow-y:hidden;}
+.tb-controls{display:flex;align-items:stretch;flex:1;min-width:0;overflow-x:auto;overflow-y:hidden;}
 .tb-controls::-webkit-scrollbar{display:none;}
 .ctrl-grp{display:flex;flex-direction:column;justify-content:center;gap:2px;padding:0 15px;border-right:1px solid var(--bdr);flex-shrink:0;}
 .ctrl-lbl{font-size:8.5px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:1px;}
@@ -62,6 +62,7 @@ body{
 .ctrl-unit{font-size:9.5px;color:var(--tx2);white-space:nowrap;}
 
 .comm-ctrl{display:flex;align-items:center;gap:8px;}
+.ctrl-grp.comm-grp{min-width:156px;}
 .toggle-sw{position:relative;width:36px;height:20px;display:inline-block;flex-shrink:0;cursor:pointer;}
 .toggle-sw input{opacity:0;width:0;height:0;position:absolute;}
 .toggle-track{position:absolute;inset:0;background:var(--surf2);border:1px solid var(--bdr2);border-radius:10px;cursor:pointer;transition:all .22s;}
@@ -401,7 +402,8 @@ body{
 .toggle-track{border-radius:14px;}
 .toggle-track::after{top:3px;left:4px;width:16px;height:16px;}
 .toggle-sw input:checked + .toggle-track::after{transform:translateX(18px);}
-.tb-actions{gap:10px;padding-left:22px;}
+.tb-actions{gap:10px;padding-left:22px;margin-left:10px;}
+.ctrl-grp.comm-grp{min-width:172px;padding-right:24px;}
 .tb-btn{height:36px;padding:7px 15px;font-size:13px;border-radius:5px;}
 
 #asm-price-strip{
@@ -691,7 +693,7 @@ body{
         </select>
       </div>
     </div>
-    <div class="ctrl-grp">
+    <div class="ctrl-grp comm-grp">
       <span class="ctrl-lbl">佣金 Commission</span>
       <div class="ctrl-inner comm-ctrl">
         <label class="toggle-sw">
