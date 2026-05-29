@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RFQ | ACHB Estimate</title>
+<title>RFQ | ACHB Estimate V3.5</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23061316'/%3E%3Ctext x='32' y='37' text-anchor='middle' font-family='Arial, sans-serif' font-size='22' font-weight='800' fill='%231CCAD3'%3ERFQ%3C/text%3E%3Cpath d='M12 48h40' stroke='%2348D597' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -220,29 +220,42 @@ body{
 .qty-tab.active{background:var(--acc);color:#041416;border-color:var(--acc);}
 .qty-tab:hover:not(.active){background:var(--surf3);color:var(--tx);}
 
-/* Cost bars */
-.cost-bars{margin:11px 0;}
-.bar-row{display:flex;align-items:center;gap:7px;margin-bottom:5px;}
-.bar-label{font-size:9.5px;color:var(--tx2);width:82px;flex-shrink:0;text-align:right;text-transform:uppercase;letter-spacing:.4px;}
-.bar-track{flex:1;height:5px;background:var(--surf3);border-radius:3px;overflow:hidden;}
-.bar-fill{height:100%;border-radius:3px;transition:width .4s ease;min-width:2px;}
-.bar-fill.mat{background:var(--acc);}
-.bar-fill.proc{background:var(--grn);}
-.bar-fill.os{background:var(--pur);}
-.bar-fill.misc{background:var(--amb);}
-.bar-val{font-size:10px;font-family:var(--ffm);color:var(--tx2);width:68px;flex-shrink:0;text-align:right;}
-
-.cost-tbl{width:100%;border-collapse:collapse;font-size:12px;}
-.cost-tbl tr{border-bottom:1px solid var(--bdr);}
-.cost-tbl tr:last-child{border-bottom:none;}
-.cost-tbl td{padding:5px 5px;}
-.cost-tbl td:first-child{color:var(--tx2);}
-.cost-tbl td:last-child{text-align:right;font-weight:600;font-family:var(--ffm);color:var(--tx);}
-.cost-tbl .row-total{background:var(--surf2);}
-.cost-tbl .row-total td{font-weight:700;color:var(--txbr) !important;}
-.cost-tbl .row-price{background:rgba(28,202,211,.10);}
-.cost-tbl .row-price td:last-child{color:var(--acc) !important;font-size:17px;font-weight:800;}
-.cost-tbl .row-order td:last-child{color:var(--tx2);font-size:11px;}
+/* Integrated cost breakdown */
+.cost-breakdown{margin-top:14px;}
+.cost-breakdown-head{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  color:var(--tx2);font-size:10px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.8px;margin-bottom:8px;
+}
+.cost-breakdown-unit{font-family:var(--ffm);color:var(--tx3);font-size:9.5px;}
+.cost-list{display:flex;flex-direction:column;border-top:1px solid var(--bdr);}
+.cost-line{
+  display:grid;grid-template-columns:minmax(102px,1.05fr) minmax(86px,1fr) minmax(82px,.75fr);
+  align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--bdr);
+}
+.cost-name{min-width:0;}
+.cost-name strong{display:block;color:var(--tx);font-size:12px;line-height:1.2;}
+.cost-name span{display:block;color:var(--tx3);font-size:9.5px;line-height:1.2;margin-top:2px;}
+.cost-meter{display:flex;align-items:center;gap:7px;min-width:0;}
+.cost-track{flex:1;height:7px;background:var(--surf3);border-radius:999px;overflow:hidden;}
+.cost-fill{height:100%;border-radius:999px;transition:width .4s ease;min-width:2px;background:var(--acc);}
+.cost-fill.mat{background:var(--acc);}
+.cost-fill.proc{background:var(--grn);}
+.cost-fill.os{background:var(--pur);}
+.cost-fill.misc{background:var(--amb);}
+.cost-fill.warn{background:var(--amb);}
+.cost-pct{width:36px;text-align:right;color:var(--tx3);font-size:10px;font-family:var(--ffm);}
+.cost-amount{text-align:right;color:var(--tx);font-family:var(--ffm);font-size:12px;font-weight:800;white-space:nowrap;}
+.cost-line.warn .cost-name strong,.cost-line.warn .cost-amount{color:var(--amb);}
+.cost-line.total{
+  grid-template-columns:minmax(0,1fr) auto;
+  margin:0 -16px;padding:12px 16px;background:rgba(255,255,255,.035);
+}
+.cost-line.total .cost-name strong{color:var(--txbr);font-size:13px;}
+.cost-line.total .cost-amount{color:var(--txbr);font-size:14px;}
+.quote-meta-grid{display:grid;grid-template-columns:1fr;gap:6px;margin-top:10px;}
+.quote-meta-line{display:flex;justify-content:space-between;gap:12px;color:var(--tx3);font-size:11px;}
+.quote-meta-line strong{font-family:var(--ffm);color:var(--tx2);}
 
 .mgn-badge{display:inline-block;background:var(--grn-dim);color:var(--grn);border:1px solid var(--grn-bdr);padding:2px 9px;border-radius:12px;font-size:10.5px;font-weight:700;font-family:var(--ffm);}
 
@@ -319,8 +332,6 @@ body{
 .tc-sep{font-size:10px;color:var(--tx3);}
 .tc-price{font-size:13px;font-weight:800;color:var(--acc);font-family:var(--ffm);white-space:nowrap;}
 .asm-tier-card.active .tc-price{color:var(--acc);}
-.tc-mgn{font-size:9.5px;font-family:var(--ffm);white-space:nowrap;}
-.tc-ntd{font-size:9px;color:var(--tx2);font-family:var(--ffm);white-space:nowrap;}
 
 /* ── ASSEMBLY PARALLEL GRID ── */
 .asm-parallel{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r);overflow:hidden;overflow-x:auto;}
@@ -349,6 +360,208 @@ body{
 /* ── ASM-MODE: hide single-only info fields ── */
 body.asm-mode .ff-single-only{display:none;}
 body.asm-mode .partno-single-hint{display:none;}
+
+/* V3.5 production readability pass */
+:root{
+  --price:#27F2FF;
+  --price-soft:rgba(39,242,255,.18);
+  --price-glow:rgba(39,242,255,.34);
+  --top-solid:#07161A;
+  --panel-solid:#10272D;
+  --panel-head:#18383F;
+  --tbh:64px;
+  --strip-h:60px;
+}
+body{
+  font-size:14px;
+  background:
+    radial-gradient(circle at 11% 17%,rgba(72,213,151,.12),transparent 330px),
+    radial-gradient(circle at 84% 8%,rgba(28,202,211,.10),transparent 360px),
+    linear-gradient(180deg,#07161A 0,#061316 240px,#041012 100%);
+}
+#topbar{
+  background:var(--top-solid);
+  border-bottom:1px solid rgba(28,202,211,.42);
+  box-shadow:0 14px 36px rgba(0,0,0,.52);
+  backdrop-filter:none;
+  padding:0 22px;
+}
+.tb-brand{padding-right:24px;border-right:1px solid rgba(49,88,98,.88);}
+.tb-logo{font-size:28px;letter-spacing:4px;color:#34F2FF;text-shadow:0 0 22px rgba(39,242,255,.32);}
+.tb-subtitle{font-size:9.5px;letter-spacing:2.6px;color:#BBD3D7;}
+.mode-seg{border-color:rgba(75,116,128,.92);background:#071316;border-radius:7px;padding:3px;}
+.mode-seg button{font-size:13px;padding:7px 22px;border-radius:5px;}
+.mode-seg button.active{background:linear-gradient(180deg,#24D7DD,#14B8C3);box-shadow:0 0 0 1px rgba(39,242,255,.18) inset;}
+.ctrl-grp{padding:0 22px;gap:4px;}
+.ctrl-lbl{font-size:9.5px;color:#BBD3D7;letter-spacing:1.2px;}
+.ctrl-grp input,.ctrl-grp select{height:34px;min-width:112px;padding:6px 10px;font-size:13px;background:#16343A;border-color:#54808B;}
+.ctrl-unit{font-size:11px;color:#8EABB1;}
+.comm-pct{font-size:13px;}
+.toggle-sw{width:44px;height:24px;}
+.toggle-track{border-radius:14px;}
+.toggle-track::after{top:3px;left:4px;width:16px;height:16px;}
+.toggle-sw input:checked + .toggle-track::after{transform:translateX(18px);}
+.tb-actions{gap:10px;padding-left:22px;}
+.tb-btn{height:36px;padding:7px 15px;font-size:13px;border-radius:5px;}
+
+#asm-price-strip{
+  background:#0B2428;
+  border-top:1px solid rgba(39,242,255,.42);
+  border-bottom:3px solid rgba(28,202,211,.55);
+  box-shadow:0 12px 30px rgba(0,0,0,.48);
+  padding:0 22px;
+  backdrop-filter:none;
+}
+.asm-strip-lbl{
+  width:128px;
+  font-size:11px;
+  line-height:1.28;
+  color:#DDFBFF;
+  letter-spacing:.9px;
+  padding-right:18px;
+  margin-right:16px;
+  border-right:1px solid rgba(39,242,255,.36);
+}
+.asm-tier-cards{gap:10px;padding:8px 0;}
+.asm-tier-card{
+  min-width:210px;
+  min-height:46px;
+  justify-content:space-between;
+  gap:10px;
+  padding:9px 18px;
+  border-radius:24px;
+  background:#10282D;
+  border-color:rgba(143,189,197,.42);
+  box-shadow:0 1px 0 rgba(255,255,255,.04) inset;
+}
+.asm-tier-card:hover{background:#14333A;border-color:rgba(39,242,255,.62);}
+.asm-tier-card.active{
+  background:linear-gradient(180deg,#143F45,#0F2D33);
+  border-color:var(--price);
+  box-shadow:0 0 0 1px rgba(39,242,255,.18) inset,0 0 24px rgba(39,242,255,.18);
+}
+.tc-qty{font-size:11px;color:#D0E2E6;}
+.tc-sep{font-size:11px;color:#7EA0A8;}
+.tc-price{
+  font-size:20px;
+  font-weight:900;
+  color:var(--price);
+  letter-spacing:.2px;
+  text-shadow:0 0 18px var(--price-glow);
+}
+.asm-tier-card.active .tc-price{color:var(--price);}
+
+#layout{max-width:1540px;gap:18px;padding:18px;}
+#inputs{gap:14px;}
+#sidebar{width:410px;top:calc(var(--tbh) + var(--strip-h) + 16px);}
+#tab-bar-card{top:calc(var(--tbh) + var(--strip-h) + 14px);}
+.card,.r-card,.wp-card,.asm-parallel{
+  background:#0F232A;
+  border-color:rgba(75,116,128,.72);
+  box-shadow:0 18px 46px rgba(0,0,0,.14);
+}
+.card-hd,.r-hd,.wp-card-hd,.asm-col-hd{
+  background:var(--panel-head);
+  border-bottom-color:rgba(75,116,128,.78);
+}
+.card-hd{
+  min-height:48px;
+  padding:12px 16px;
+  font-size:15px;
+  letter-spacing:.2px;
+}
+.card-hd::before,.r-hd::before{width:4px;}
+.card-bd{padding:16px;}
+.ff label{font-size:11px;color:#B9D0D5;}
+.ff input,.ff select,.ff textarea{
+  min-height:36px;
+  font-size:14px;
+  background:#15323A;
+  border-color:#527A86;
+}
+.qty-tag,.qty-tab,.part-tab,.add-tab-btn{font-size:12.5px;}
+.qty-tab{padding:6px 14px;}
+.part-tab,.add-tab-btn{padding:7px 16px;}
+.r-hd{
+  min-height:56px;
+  padding:14px 17px;
+  font-size:15px;
+  justify-content:space-between;
+}
+.r-bd{padding:16px;}
+.live-title{display:inline-flex;align-items:center;gap:8px;}
+.quote-hero{
+  padding:16px;
+  border:1px solid rgba(39,242,255,.38);
+  background:linear-gradient(180deg,rgba(39,242,255,.14),rgba(39,242,255,.05));
+  border-radius:7px;
+  margin-bottom:14px;
+  box-shadow:0 0 28px rgba(39,242,255,.08) inset;
+}
+.quote-hero-main{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 118px;
+  gap:16px;
+  align-items:center;
+}
+.quote-hero-price{min-width:0;}
+.quote-hero-label{
+  font-size:11px;
+  color:#AFC8CD;
+  font-weight:900;
+  text-transform:uppercase;
+  letter-spacing:.8px;
+}
+.quote-hero-value{
+  font-family:var(--ffm);
+  font-size:32px;
+  font-weight:900;
+  color:var(--price);
+  line-height:1.15;
+  margin-top:4px;
+  text-shadow:0 0 18px var(--price-glow);
+}
+.quote-hero-sub{
+  font-family:var(--ffm);
+  color:#AFC8CD;
+  margin-top:4px;
+  font-weight:700;
+}
+.quote-margin-box{
+  align-self:stretch;
+  border-left:1px solid rgba(39,242,255,.24);
+  padding-left:14px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:flex-end;
+  text-align:right;
+}
+.quote-margin-label{
+  color:#AFC8CD;
+  font-size:9.5px;
+  font-weight:900;
+  letter-spacing:.65px;
+  text-transform:uppercase;
+  line-height:1.25;
+}
+.quote-margin-value{
+  margin-top:7px;
+  font-family:var(--ffm);
+  font-size:22px;
+  font-weight:900;
+  color:var(--grn);
+  line-height:1;
+  text-shadow:0 0 14px rgba(72,213,151,.22);
+}
+.sum-tbl{font-size:12px;}
+.cost-track{height:7px;background:#25444D;}
+.cost-fill.mat,.cost-fill.proc{background:linear-gradient(90deg,#27F2FF,#48D597);}
+.asm-total-cell{padding:13px 16px;}
+.asm-total-lbl{font-size:10px;color:#B9D0D5;}
+.asm-total-val{font-size:20px;color:#4BE4A0;}
+.wp-card-hd{padding:11px 14px;}
+.wp-body{padding:16px;}
 
 @media (max-width:900px){
   html,body{width:100%;max-width:100%;overflow-x:hidden;}
@@ -401,7 +614,7 @@ body.asm-mode .partno-single-hint{display:none;}
     justify-items:start;border-radius:16px;gap:3px;padding:10px 14px;
   }
   .tc-price{font-size:15px;}
-  .tc-mgn,.tc-ntd,.tc-sep{display:none;}
+  .tc-sep{display:none;}
 
   #layout{
     width:calc(100vw - 20px);max-width:calc(100vw - 20px);
@@ -442,8 +655,7 @@ body.asm-mode .partno-single-hint{display:none;}
   .wp-inputs input.wp-qty{width:100%;flex:1 1 100%;}
 
   .asm-row,.asm-total-band{min-width:720px;}
-  .sum-tbl,.cost-tbl{table-layout:fixed;}
-  .cost-tbl td{word-break:break-word;}
+  .sum-tbl{table-layout:fixed;}
 }
 </style>
 </head>
@@ -454,7 +666,7 @@ body.asm-mode .partno-single-hint{display:none;}
   <div class="tb-brand">
     <div class="tb-logo-block">
       <div class="tb-logo">ACHB</div>
-      <div class="tb-subtitle">RFQ Estimate System v3.4</div>
+      <div class="tb-subtitle">RFQ Estimate System v3.5</div>
     </div>
     <div class="mode-seg">
       <button id="modeBtn1" class="active" onclick="setMode('single')">單工件</button>
@@ -703,7 +915,7 @@ body.asm-mode .partno-single-hint{display:none;}
   <!-- Results Sidebar -->
   <div id="sidebar">
     <div class="r-card">
-      <div class="r-hd">▶ 即時估價結果 / Live Quote</div>
+      <div class="r-hd"><span class="live-title">▶ 即時估價結果 / Live Quote</span></div>
       <div class="r-bd" id="resultsBody">
         <div class="empty-hint">尚未輸入製程資料<br>請點選「新增製程步驟」開始</div>
       </div>
@@ -1445,24 +1657,61 @@ function calcQty(qty, tab) {
 
 function r2(n){ return Math.round(n*100)/100; }
 function ntd(n){ return n.toLocaleString('zh-TW',{minimumFractionDigits:1,maximumFractionDigits:1}); }
+function quoteHero(r, label, unit) {
+  return `<div class="quote-hero">
+    <div class="quote-hero-main">
+      <div class="quote-hero-price">
+        <div class="quote-hero-label">${label}</div>
+        <div class="quote-hero-value">USD $${r.priceUSD.toFixed(2)}</div>
+        <div class="quote-hero-sub">約 NT$ ${r.priceNTD.toLocaleString()} / ${unit}</div>
+      </div>
+      <div class="quote-margin-box">
+        <div class="quote-margin-label">毛利率<br>Gross Margin</div>
+        <div class="quote-margin-value">${(r.margin * 100).toFixed(1)}%</div>
+      </div>
+    </div>
+  </div>`;
+}
 
 // Visual cost breakdown bars
-function makeBars(r) {
+function costBreakdown(r, totalLabel, orderLabel) {
   const total = r.total || 0.01;
   const items = [
-    { label:'材料成本', pct:r.mat/total*100,     cls:'mat',  val:r.mat },
-    { label:'廠內加工', pct:r.inhouse/total*100,  cls:'proc', val:r.inhouse },
-    { label:'廠外製程', pct:r.outsource/total*100,cls:'os',   val:r.outsource },
-    { label:'外購物料', pct:r.pur/total*100,      cls:'misc', val:r.pur },
-    { label:'設定+攤提',pct:(r.setup+r.ot)/total*100,cls:'misc',val:r2(r.setup+r.ot) },
-  ].filter(i => i.val > 0);
-  if (!items.length) return '';
-  return `<div class="cost-bars">${items.map(i=>`
-    <div class="bar-row">
-      <span class="bar-label">${i.label}</span>
-      <div class="bar-track"><div class="bar-fill ${i.cls}" style="width:${Math.min(Math.max(i.pct,0),100).toFixed(1)}%"></div></div>
-      <span class="bar-val">NT$${ntd(i.val)}</span>
-    </div>`).join('')}</div>`;
+    { label:'材料成本', sub:'Material', val:r.mat, cls:'mat' },
+    { label:'外購物料', sub:'Purchased', val:r.pur, cls:'misc' },
+    { label:'廠內加工', sub:'In-house', val:r.inhouse, cls:'proc' },
+    { label:'廠外製程', sub:'Outsourced', val:r.outsource, cls:'os' },
+    { label:'設定+攤提', sub:'Setup / Tooling', val:r2(r.setup + r.ot), cls:'misc' },
+  ];
+  if (r.commission > 0) items.push({ label:'佣金', sub:'Commission', val:r.commission, cls:'warn', warn:true });
+
+  return `<div class="cost-breakdown">
+    <div class="cost-breakdown-head">
+      <span>成本拆解 / Cost Breakdown</span>
+      <span class="cost-breakdown-unit">NTD / unit</span>
+    </div>
+    <div class="cost-list">
+      ${items.map(i => {
+        const pct = Math.min(Math.max((i.val / total) * 100, 0), 100);
+        return `<div class="cost-line${i.warn ? ' warn' : ''}">
+          <div class="cost-name"><strong>${i.label}</strong><span>${i.sub}</span></div>
+          <div class="cost-meter">
+            <div class="cost-track"><div class="cost-fill ${i.cls}" style="width:${pct.toFixed(1)}%"></div></div>
+            <span class="cost-pct">${pct.toFixed(1)}%</span>
+          </div>
+          <div class="cost-amount">NT$ ${ntd(i.val)}</div>
+        </div>`;
+      }).join('')}
+      <div class="cost-line total">
+        <div class="cost-name"><strong>${totalLabel}</strong><span>Total cost</span></div>
+        <div class="cost-amount">NT$ ${ntd(r.total)}</div>
+      </div>
+    </div>
+    <div class="quote-meta-grid">
+      <div class="quote-meta-line"><span>換算 NTD（× ${r.er}）</span><strong>約 NT$ ${r.priceNTD.toLocaleString()}</strong></div>
+      <div class="quote-meta-line"><span>${orderLabel}</span><strong>USD $${r.orderValUSD.toFixed(2)}</strong></div>
+    </div>
+  </div>`;
 }
 
 // ══════════════════════════════════════════════════════
@@ -1538,10 +1787,6 @@ function recalc() {
     const cu = document.getElementById('customer').value || '—';
     const r  = calcAssemblySet(G.activeQty);
 
-    const tabs = qtys.map(q=>
-      `<button class="qty-tab${q===G.activeQty?' active':''}" onclick="setAQty(${q})">${q.toLocaleString()} sets</button>`
-    ).join('');
-
     // Update WP total cells in parallel grid
     const wpCosts = A.workpieces.map(wp => {
       const N = wp.qtyPerUnit || 1;
@@ -1586,32 +1831,8 @@ function recalc() {
         <span>工件數: <strong>${wpCount}</strong></span>
         <span>製程總數: <strong>${totalProcs}</strong></span>
       </div>
-      <div class="qty-tabs">${tabs}</div>
-      ${makeBars(r)}
-      <table class="cost-tbl">
-        <tr><td>材料成本 Material</td>         <td>NT$ ${ntd(r.mat)}</td></tr>
-        <tr><td>外購物料 Purchased Parts</td>   <td>NT$ ${ntd(r.pur)}</td></tr>
-        <tr><td>廠內加工 In-house Machining</td><td>NT$ ${ntd(r.inhouse)}</td></tr>
-        <tr><td>廠外製程 Outsourced Proc.</td>  <td>NT$ ${ntd(r.outsource)}</td></tr>
-        <tr><td>設定費攤提 Setup Amort.</td>    <td>NT$ ${ntd(r.setup)}</td></tr>
-        <tr><td>一次性費攤提 Tooling Amort.</td><td>NT$ ${ntd(r.ot)}</td></tr>
-        ${r.commission > 0 ? `<tr><td style="color:var(--amb);">佣金 Commission (5%)</td><td style="color:var(--amb);">NT$ ${ntd(r.commission)}</td></tr>` : ''}
-        <tr class="row-total">
-          <td><strong>總成本/組 Total Cost/set</strong></td>
-          <td>NT$ ${ntd(r.total)}</td>
-        </tr>
-        <tr><td>毛利率 Gross Margin</td><td><span class="mgn-badge">${(r.margin*100).toFixed(1)}%</span></td></tr>
-        <tr class="row-price">
-          <td><strong>建議售價/組 Unit Price/set</strong></td>
-          <td><strong>USD $${r.priceUSD.toFixed(2)}</strong></td>
-        </tr>
-        <tr><td style="font-size:11px;color:var(--tx3);">換算 NTD（× ${r.er}）</td>
-            <td style="font-size:11px;color:var(--tx3);">≈ NT$ ${r.priceNTD.toLocaleString()}</td></tr>
-        <tr class="row-order">
-          <td style="font-size:11px;color:var(--tx3);">× ${G.activeQty.toLocaleString()} sets 級距總額</td>
-          <td>USD $${r.orderValUSD.toFixed(2)}</td>
-        </tr>
-      </table>
+      ${quoteHero(r, '建議售價 / UNIT PRICE PER SET', 'set')}
+      ${costBreakdown(r, '總成本/組 Total Cost/set', `× ${G.activeQty.toLocaleString()} sets 級距總額`)}
       ${A.workpieces.length > 1 ? `
       <div class="divider"></div>
       <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px;">工件成本拆解 @ ${G.activeQty} sets</div>
@@ -1644,10 +1865,6 @@ function recalc() {
   const mat = document.getElementById('material').value || '—';
   const r   = calcQty(G.activeQty);
 
-  const tabs = qtys.map(q=>
-    `<button class="qty-tab${q===G.activeQty?' active':''}" onclick="setAQty(${q})">${q.toLocaleString()} pcs</button>`
-  ).join('');
-
   rb.innerHTML = `
     <div class="r-meta">
       <span>料號: <strong>${pn}</strong></span>
@@ -1655,32 +1872,8 @@ function recalc() {
       <span>材料: <strong>${mat}</strong></span>
       <span>製程數: <strong>${S.procs.length}</strong></span>
     </div>
-    <div class="qty-tabs">${tabs}</div>
-    ${makeBars(r)}
-    <table class="cost-tbl">
-      <tr><td>材料成本 Material</td>         <td>NT$ ${ntd(r.mat)}</td></tr>
-      <tr><td>外購物料 Purchased Parts</td>   <td>NT$ ${ntd(r.pur)}</td></tr>
-      <tr><td>廠內加工 In-house Machining</td><td>NT$ ${ntd(r.inhouse)}</td></tr>
-      <tr><td>廠外製程 Outsourced Proc.</td>  <td>NT$ ${ntd(r.outsource)}</td></tr>
-      <tr><td>設定費攤提 Setup Amort.</td>    <td>NT$ ${ntd(r.setup)}</td></tr>
-      <tr><td>一次性費攤提 Tooling Amort.</td><td>NT$ ${ntd(r.ot)}</td></tr>
-      ${r.commission > 0 ? `<tr><td style="color:var(--amb);">佣金 Commission (5%)</td><td style="color:var(--amb);">NT$ ${ntd(r.commission)}</td></tr>` : ''}
-      <tr class="row-total">
-        <td><strong>總成本/件 Total Cost</strong></td>
-        <td>NT$ ${ntd(r.total)}</td>
-      </tr>
-      <tr><td>毛利率 Gross Margin</td><td><span class="mgn-badge">${(r.margin*100).toFixed(1)}%</span></td></tr>
-      <tr class="row-price">
-        <td><strong>建議售價/件 Unit Price</strong></td>
-        <td><strong>USD $${r.priceUSD.toFixed(2)}</strong></td>
-      </tr>
-      <tr><td style="font-size:11px;color:var(--tx3);">換算 NTD（× ${r.er}）</td>
-          <td style="font-size:11px;color:var(--tx3);">≈ NT$ ${r.priceNTD.toLocaleString()}</td></tr>
-      <tr class="row-order">
-        <td style="font-size:11px;color:var(--tx3);">× ${G.activeQty.toLocaleString()} pcs 級距總額</td>
-        <td>USD $${r.orderValUSD.toFixed(2)}</td>
-      </tr>
-    </table>
+    ${quoteHero(r, '建議售價 / UNIT PRICE PER PC', 'pc')}
+    ${costBreakdown(r, '總成本/件 Total Cost', `× ${G.activeQty.toLocaleString()} pcs 級距總額`)}
   `;
   if(TABS.length > 1){
     const qtyHeaders = qtys.map(q=>`<th>${q.toLocaleString()}</th>`).join('');
@@ -1738,15 +1931,10 @@ function renderPriceStrip() {
     cards.innerHTML = qtys.map(q => {
       const qr  = calcAssemblySet(q);
       const isA = q === G.activeQty;
-      const isC = G.qtyMargins[q] != null;
       return `<div class="asm-tier-card${isA?' active':''}" onclick="setAQty(${q})">
         <span class="tc-qty">${q.toLocaleString()} sets</span>
         <span class="tc-sep">·</span>
         <span class="tc-price">USD $${qr.priceUSD.toFixed(2)}</span>
-        <span class="tc-sep">·</span>
-        <span class="tc-mgn" ${isC?'style="color:var(--pur);"':'style="color:var(--tx3);"'}>${(qr.margin*100).toFixed(1)}%</span>
-        <span class="tc-sep">·</span>
-        <span class="tc-ntd">NT$ ${ntd(qr.total)}/set</span>
       </div>`;
     }).join('');
   } else {
@@ -1758,15 +1946,10 @@ function renderPriceStrip() {
     cards.innerHTML = qtys.map(q => {
       const qr  = calcQty(q);
       const isA = q === G.activeQty;
-      const isC = G.qtyMargins[q] != null;
       return `<div class="asm-tier-card${isA?' active':''}" onclick="setAQty(${q})">
         <span class="tc-qty">${q.toLocaleString()} pcs</span>
         <span class="tc-sep">·</span>
         <span class="tc-price">USD $${qr.priceUSD.toFixed(2)}</span>
-        <span class="tc-sep">·</span>
-        <span class="tc-mgn" ${isC?'style="color:var(--pur);"':'style="color:var(--tx3);"'}>${(qr.margin*100).toFixed(1)}%</span>
-        <span class="tc-sep">·</span>
-        <span class="tc-ntd">NT$ ${ntd(qr.total)}/pc</span>
       </div>`;
     }).join('');
   }
