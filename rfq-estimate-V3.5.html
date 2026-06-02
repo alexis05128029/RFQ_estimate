@@ -710,6 +710,7 @@ body{
     <button class="tb-btn tb-load" onclick="loadCalc()">↑ 載入</button>
     <div style="width:1px;height:22px;background:var(--bdr);"></div>
     <button class="tb-btn tb-excel" onclick="exportExcel()">⊞ 匯出 Excel</button>
+    <button class="tb-btn" onclick="exportToQuotation()" style="background:var(--acc);color:#fff;">📋 匯出至報價單</button>
     <button class="tb-btn tb-reset" onclick="resetAll()">✕ 清空</button>
   </div>
 </div>
@@ -2165,6 +2166,79 @@ function saveCalc() {
     G, TABS, activeTabId, A,
   };
 
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function exportToQuotation() {
+  const rfqNo   = document.getElementById('rfqNo').value.trim();
+  const customer = document.getElementById('customer').value.trim();
+  const san2 = s => s.replace(/[\\/:*?"<>|\s]/g, '_');
+
+  const today = new Date();
+  const docDate = `${today.getFullYear()}/${String(today.getMonth()+1).padStart(2,'0')}/${String(today.getDate()).padStart(2,'0')}`;
+
+  let items = [];
+
+  // single tabs with at least one process
+  const activeTabs = TABS.filter(tab => tab.procs.length > 0);
+  if (activeTabs.length > 0) {
+    activeTabs.forEach(tab => {
+      items.push({
+        partNo: tab.partNo || '',
+        productName: tab.partNo + (tab.revision ? ' Rev.' + tab.revision : ''),
+        material: [tab.material, tab.surface].filter(Boolean).join(' / '),
+        leadTime: '',
+        qtys: G.qtys.map(q => {
+          const r = calcQty(q, tab);
+          return { q, p: r.priceUSD };
+        }),
+      });
+    });
+  }
+
+  // assembly set if workpieces have processes
+  const asmHasProcs = A.workpieces.some(w => w.procs.length > 0);
+  if (asmHasProcs) {
+    const asmQtys = G.qtys.map(q => {
+      const r = calcAssemblySet(q);
+      return { q, p: r.priceUSD };
+    });
+    items.push({
+      partNo: (A.workpieces[0] && A.workpieces[0].partNo) || '',
+      productName: 'Assembly Set',
+      material: A.workpieces.map(w => w.material).filter(Boolean).join(' / '),
+      leadTime: '',
+      qtys: asmQtys,
+    });
+  }
+
+  if (items.length === 0) {
+    alert('尚未輸入任何製程資料，無法匯出。');
+    return;
+  }
+
+  const data = {
+    date: new Date().toISOString(),
+    fields: {
+      quotNo: '',
+      docDate,
+      currency: 'USD',
+      payment: '',
+      salesman: '',
+      shipment: '',
+      customer,
+      contact: '',
+      tel: '',
+    },
+    items,
+  };
+
+  const filename = (rfqNo ? san2(rfqNo) + '_quotation' : 'quotation_export') + '.json';
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
