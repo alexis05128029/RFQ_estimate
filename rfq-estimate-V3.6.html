@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RFQ | ACHB Estimate V3.5</title>
+<title>RFQ | ACHB Estimate V3.6</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23061316'/%3E%3Ctext x='32' y='37' text-anchor='middle' font-family='Arial, sans-serif' font-size='22' font-weight='800' fill='%231CCAD3'%3ERFQ%3C/text%3E%3Cpath d='M12 48h40' stroke='%2348D597' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -247,6 +247,7 @@ body{
 .cost-fill.warn{background:var(--amb);}
 .cost-pct{width:36px;text-align:right;color:var(--tx3);font-size:10px;font-family:var(--ffm);}
 .cost-amount{text-align:right;color:var(--tx);font-family:var(--ffm);font-size:12px;font-weight:800;white-space:nowrap;}
+.cost-amount-usd{display:block;font-family:var(--ffm);font-size:10px;font-weight:600;color:var(--tx3);margin-top:1px;}
 .cost-line.warn .cost-name strong,.cost-line.warn .cost-amount{color:var(--amb);}
 .cost-line.total{
   grid-template-columns:minmax(0,1fr) auto;
@@ -668,7 +669,7 @@ body{
   <div class="tb-brand">
     <div class="tb-logo-block">
       <div class="tb-logo">ACHB</div>
-      <div class="tb-subtitle">RFQ Estimate System v3.5</div>
+      <div class="tb-subtitle">RFQ Estimate System v3.6</div>
     </div>
     <div class="mode-seg">
       <button id="modeBtn1" class="active" onclick="setMode('single')">單工件</button>
@@ -764,7 +765,7 @@ body{
           </div>
           <div class="ff ff-single-only">
             <label>版本 Revision</label>
-            <input type="text" id="revision" placeholder="e.g. RevB" oninput="S.revision=this.value">
+            <input type="text" id="revision" placeholder="e.g. 01 或 C（只填 REV 後綴）" oninput="S.revision=this.value">
           </div>
           <div class="ff ff-single-only">
             <label>材料 Material</label>
@@ -813,22 +814,44 @@ body{
     <div class="card">
       <div class="card-hd">材料成本 &nbsp;/&nbsp; Material Cost</div>
       <div class="card-bd">
-        <div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:11px;">
+          <span style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;">計價方式</span>
+          <div class="type-sw" id="matModeSw">
+            <button id="matModeBtnPerpc" class="on-in" onclick="setMatMode('perpc')">每件單價</button>
+            <button id="matModeBtnBar" onclick="setMatMode('bar')">圓棒切割</button>
+          </div>
+        </div>
+        <div id="matPerpcSection">
           <label style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:6px;">
             數量級距單價 (NTD / pc) &nbsp;—&nbsp;
             <span style="font-weight:400;color:var(--tx3);text-transform:none;letter-spacing:0;">數量留空 = 不限數量固定單價</span>
           </label>
           <div class="tier-rows" id="matTierList"></div>
           <button class="add-tier" onclick="addMatTier()" style="margin-top:5px;">＋ 新增價格級距</button>
+          <div class="note green" id="matHintPerpc" style="margin-top:8px;">輸入材料級距單價後，這裡會顯示每件成本試算</div>
+        </div>
+        <div id="matBarSection" style="display:none;">
+          <div class="ff" style="max-width:200px;margin-bottom:11px;">
+            <label>一支出數 Pcs per Bar</label>
+            <input type="number" id="piecesPerBar" value="" min="0" step="1" placeholder="e.g. 3"
+              oninput="S.piecesPerBar=parseFloat(this.value)||0;updateBarHint();recalc()">
+          </div>
+          <label style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:6px;">
+            整支單價級距 (依支數) &nbsp;—&nbsp;
+            <span style="font-weight:400;color:var(--tx3);text-transform:none;letter-spacing:0;">支數留空 = 不限支數固定整支單價</span>
+          </label>
+          <div class="tier-rows" id="barTierList"></div>
+          <button class="add-tier" onclick="addBarTier()" style="margin-top:5px;">＋ 新增支數級距</button>
+          <div class="note green" id="barHint" style="margin-top:8px;">輸入一支出數與整支單價後，這裡會顯示支數試算</div>
         </div>
         <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--bdr);display:flex;align-items:flex-end;gap:12px;">
           <div class="ff" style="max-width:180px;">
             <label>架機數量 Setup Batch Qty (pcs)</label>
-            <input type="number" id="matSetupQty" value="" min="0" step="1" placeholder="留空 = 依訂單量" oninput="S.matSetupQty=parseFloat(this.value)||0;recalc()">
+            <input type="number" id="matSetupQty" value="" min="0" step="1" placeholder="留空 = 依訂單量" oninput="S.matSetupQty=parseFloat(this.value)||0;updateBarHint();recalc()">
           </div>
           <div class="note" style="margin-top:0;flex:1;">
-            材料採購批量，決定使用哪個供應商報價級距<br>
-            <em>例：訂 50 件但架機需備料 100 件 → 填 100</em>
+            材料採購批量／架機備料量，計入每件材料攤提<br>
+            <em>圓棒切割：需求件數 = 訂單量 + 架機量，再無條件進位算需要幾支</em>
           </div>
         </div>
       </div>
@@ -851,14 +874,7 @@ body{
         <span class="badge" id="purchBadge">0 項</span>
       </div>
       <div class="card-bd">
-        <div class="purch-hdr">
-          <span>品項名稱 Item</span>
-          <span>單價 NTD</span>
-          <span>用量/件</span>
-          <span>計算方式</span>
-          <span style="text-align:right;">小計</span>
-          <span></span>
-        </div>
+        <div style="font-size:9.5px;color:var(--tx3);margin-bottom:8px;padding:0 2px;">每項可設定單價級距（依詢價量）；用量 = 每件用量；批次攤提 = 整批費用 ÷ 訂單量</div>
         <div id="purchList"></div>
         <div class="purch-total" id="purchTotal" style="display:none;"></div>
         <button class="add-op" onclick="addPurchItem()" style="margin-top:6px;">＋ 新增品項 / Add Item</button>
@@ -878,14 +894,7 @@ body{
           <span class="badge" id="asmPurchBadge">0 項</span>
         </div>
         <div class="card-bd">
-          <div class="purch-hdr">
-            <span>品項名稱 Item</span>
-            <span>單價 NTD</span>
-            <span>用量/set</span>
-            <span>計算方式</span>
-            <span style="text-align:right;">小計</span>
-            <span></span>
-          </div>
+          <div style="font-size:9.5px;color:var(--tx3);margin-bottom:8px;padding:0 2px;">每項可設定單價級距（依詢價量）；用量 = 每組(set)用量；批次攤提 = 整批費用 ÷ 訂單量</div>
           <div id="asmPurchList"></div>
           <div class="purch-total" id="asmPurchTotal" style="display:none;"></div>
           <button class="add-op" onclick="addPurchItem(true)" style="margin-top:6px;">＋ 新增品項 / Add Item</button>
@@ -976,7 +985,7 @@ const OS_PRESETS = [
   '熱處理 Heat Treatment','滲碳 Carburizing','氮化 Nitriding',
   '噴砂 Sandblasting','噴丸 Shot Peening','噴漆 Painting',
   '電著塗裝 E-coat','鈍化 Passivation','鍍鈦 PVD Ti-coating',
-  '蒸氣拋光 Vapor Polish','外包 機加工 CNC','外包研磨','其他外發'
+  '蒸氣拋光 Vapor Polish','外包 機加工 CNC','外包研磨','外發包裝','外發組裝','其他外發'
 ];
 
 // ══════════════════════════════════════════════════════
@@ -988,6 +997,7 @@ function newTab(id){
   return { id, partNo:'', revision:'', material:'', surface:'',
     matSetupQty:0, ot_knife:0, ot_fixture:0, ot_mold:0, ot_other:0,
     procs:[], nextId:1, matTiers:[{qty:null,price:0}],
+    matMode:'perpc', barTiers:[{qty:null,price:0}], piecesPerBar:0,
     purchItems:[], nextPurchId:1 };
 }
 let nextTabId = 2;
@@ -1065,10 +1075,12 @@ function loadTabToDOM(tab){
   document.getElementById('material').value    = tab.material    || '';
   document.getElementById('surface').value     = tab.surface     || '';
   document.getElementById('matSetupQty').value = tab.matSetupQty || '';
+  document.getElementById('piecesPerBar').value= tab.piecesPerBar|| '';
   document.getElementById('ot_knife').value    = tab.ot_knife    || 0;
   document.getElementById('ot_fixture').value  = tab.ot_fixture  || 0;
   document.getElementById('ot_mold').value     = tab.ot_mold     || 0;
   document.getElementById('ot_other').value    = tab.ot_other    || 0;
+  applyMatModeUI();
 }
 
 function switchTab(id){
@@ -1376,6 +1388,44 @@ function updMatTier(i, field, val, wpId) {
   recalc();
 }
 
+// ── 圓棒整支單價級距（依支數）──
+function renderBarTiers(wp) {
+  const wpId  = wp ? wp.id : null;
+  const tiers = wp ? wp.barTiers : S.barTiers;
+  const el = document.getElementById(`${_p(wpId)}barTierList`);
+  if (!el) return;
+  el.innerHTML = (tiers||[]).map((t, i) => `
+    <div class="tier-row">
+      <input type="number" placeholder="支數 (留空=固定價)" value="${t.qty||''}" min="1"
+        oninput="updBarTier(${i},'qty',this.value${_w(wpId)})">
+      <input type="number" placeholder="NTD / 支" value="${t.price||''}" min="0"
+        oninput="updBarTier(${i},'price',this.value${_w(wpId)})">
+      <button class="tier-del" onclick="delBarTier(${i}${_w(wpId)})">×</button>
+    </div>`).join('');
+}
+function addBarTier(wpId) {
+  const st = _st(wpId);
+  if (!st) return;
+  if (!st.barTiers) st.barTiers = [];
+  st.barTiers.push({qty:null, price:0});
+  if (wpId) renderAssembly(); else renderBarTiers(null);
+}
+function delBarTier(i, wpId) {
+  const st = _st(wpId);
+  if (!st) return;
+  if (st.barTiers.length > 1) st.barTiers.splice(i,1);
+  else st.barTiers[0] = {qty:null, price:0};
+  if (wpId) renderAssembly(); else renderBarTiers(null);
+  recalc();
+}
+function updBarTier(i, field, val, wpId) {
+  const st = _st(wpId);
+  if (!st) return;
+  st.barTiers[i][field] = field==='qty' ? (parseInt(val)||null) : (parseFloat(val)||0);
+  if (!wpId) updateBarHint();
+  recalc();
+}
+
 // ══════════════════════════════════════════════════════
 // PURCHASED ITEMS
 // ══════════════════════════════════════════════════════
@@ -1385,6 +1435,22 @@ function _pel(ia, key) {
   return document.getElementById(m[key]);
 }
 function _psid(ia, id) { return ia ? `apsub_${id}` : `psub_${id}`; }
+function _pcid(ia, id) { return ia ? `apcalc_${id}` : `pcalc_${id}`; }
+
+// 外購品項小計算式（依實際採購數量）
+function purchCalcText(it, ia) {
+  const aqty = G.activeQty || (G.qtys.length ? Math.min(...G.qtys) : 1);
+  const usage = it.qtyPerPc || 1;
+  const unit = purchUnit(it, aqty);
+  const u = ia ? 'set' : 'pc';
+  if (unit <= 0) return '<span style="color:var(--tx3);">填入單價級距後顯示小計</span>';
+  if (it.amort) {
+    const sub = r2(unit * usage / aqty);
+    return `小計 @ ${aqty} ${u}s：批次 ${usage} × NT$${unit.toLocaleString()} ÷ ${aqty} = <strong>NT$ ${ntd(sub)}</strong> / ${u}`;
+  }
+  const sub = r2(unit * usage);
+  return `小計 @ ${aqty} ${u}s：採購 ${r2(aqty * usage)} 件 → 級距 NT$${unit.toLocaleString()} × 用量 ${usage} = <strong>NT$ ${ntd(sub)}</strong> / ${u}`;
+}
 
 function renderPurchItems(ia) {
   ia = !!ia;
@@ -1405,27 +1471,43 @@ function renderPurchItems(ia) {
   const xs = ia ? ',true' : '';
 
   el.innerHTML = st.purchItems.map(it => {
-    const lineTotal = (it.unitPrice||0) * (it.qtyPerPc||1);
+    const unit = purchUnit(it, aqty);
+    const lineTotal = unit * (it.qtyPerPc||1);
     const sub = it.amort ? r2(lineTotal / aqty) : r2(lineTotal);
     const subLabel = it.amort
       ? `NT$ ${sub.toLocaleString('zh-TW',{minimumFractionDigits:1,maximumFractionDigits:1})} <span style="font-weight:400;color:var(--tx3);font-size:9.5px;">@${aqty}pc</span>`
       : `NT$ ${sub.toLocaleString('zh-TW',{minimumFractionDigits:1,maximumFractionDigits:1})}`;
-    return `<div class="purch-row">
-      <input type="text" placeholder="品項名稱 e.g. O-ring" value="${it.name||''}"
-        oninput="updPurchItem(${it.id},'name',this.value${xs})">
-      <input type="number" placeholder="0" value="${it.unitPrice||''}" min="0" step="0.01"
-        oninput="updPurchItem(${it.id},'unitPrice',this.value${xs})">
-      <input type="number" placeholder="1" value="${it.qtyPerPc||''}" min="0" step="any"
-        oninput="updPurchItem(${it.id},'qtyPerPc',this.value${xs})">
-      <button class="amort-btn${it.amort?' on':''}" onclick="updPurchItem(${it.id},'amort',${!it.amort}${xs})"
-        title="${it.amort?'批次總費用÷訂單量':'單價×用量（固定/件）'}">${it.amort?'批次攤提':'固定/件'}</button>
-      <span class="purch-sub" id="${_psid(ia,it.id)}">${subLabel}</span>
-      <button class="purch-del" onclick="removePurchItem(${it.id}${xs})">×</button>
+    const tiersHtml = (it.tiers||[]).map((t,ti)=>`
+      <div class="tier-row">
+        <input type="number" placeholder="數量 (留空=固定價)" value="${t.qty||''}" min="1"
+          oninput="updPurchTier(${it.id},${ti},'qty',this.value${xs})">
+        <input type="number" placeholder="NTD 單價" value="${t.price||''}" min="0" step="0.01"
+          oninput="updPurchTier(${it.id},${ti},'price',this.value${xs})">
+        <button class="tier-del" onclick="delPurchTier(${it.id},${ti}${xs})">×</button>
+      </div>`).join('');
+    return `<div class="purch-item" style="border:1px solid var(--bdr);border-radius:var(--rs);padding:9px 10px;margin-bottom:8px;background:rgba(0,0,0,.10);">
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <input type="text" placeholder="品項名稱 e.g. O-ring" value="${it.name||''}" style="flex:1;min-width:120px;padding:5px 7px;border:1px solid var(--bdr2);border-radius:var(--rx);font-size:12px;background:var(--surf2);color:var(--tx);"
+          oninput="updPurchItem(${it.id},'name',this.value${xs})">
+        <span style="font-size:10px;color:var(--tx3);white-space:nowrap;">用量</span>
+        <input type="number" placeholder="1" value="${it.qtyPerPc||''}" min="0" step="any" style="width:58px;padding:5px 7px;border:1px solid var(--bdr2);border-radius:var(--rx);font-size:12px;background:var(--surf2);color:var(--tx);font-family:var(--ffm);text-align:center;"
+          oninput="updPurchItem(${it.id},'qtyPerPc',this.value${xs})">
+        <button class="amort-btn${it.amort?' on':''}" onclick="updPurchItem(${it.id},'amort',${!it.amort}${xs})"
+          title="${it.amort?'批次總費用÷訂單量':'單價×用量（固定/件）'}">${it.amort?'批次攤提':'固定/件'}</button>
+        <span class="purch-sub" id="${_psid(ia,it.id)}">${subLabel}</span>
+        <button class="purch-del" onclick="removePurchItem(${it.id}${xs})">×</button>
+      </div>
+      <div style="margin-top:7px;padding-top:7px;border-top:1px dashed var(--bdr);">
+        <span style="font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px;">單價級距（依詢價量）</span>
+        <div class="tier-rows">${tiersHtml}</div>
+        <button class="add-tier" onclick="addPurchTier(${it.id}${xs})" style="margin-top:5px;">＋ 數量級距</button>
+      </div>
+      <div class="note green" id="${_pcid(ia,it.id)}" style="margin-top:6px;font-size:9.5px;">${purchCalcText(it,ia)}</div>
     </div>`;
   }).join('');
 
   const grandTotal = r2(st.purchItems.reduce((s,it) => {
-    const lt = (it.unitPrice||0)*(it.qtyPerPc||1);
+    const lt = purchUnit(it, aqty)*(it.qtyPerPc||1);
     return s + (it.amort ? lt/aqty : lt);
   }, 0));
   if (total) {
@@ -1437,7 +1519,7 @@ function renderPurchItems(ia) {
 function addPurchItem(ia) {
   ia = !!ia;
   const st = _pst(ia);
-  st.purchItems.push({id: st.nextPurchId++, name:'', unitPrice:0, qtyPerPc:1, amort:true});
+  st.purchItems.push({id: st.nextPurchId++, name:'', tiers:[{qty:null,price:0}], qtyPerPc:1, amort:true});
   renderPurchItems(ia);
 }
 function removePurchItem(id, ia) {
@@ -1455,16 +1537,50 @@ function updPurchItem(id, field, val, ia) {
     it.amort = (val === true || val === 'true');
     renderPurchItems(ia); return;
   }
-  it[field] = ['unitPrice','qtyPerPc'].includes(field) ? (parseFloat(val)||0) : val;
+  it[field] = (field==='qtyPerPc') ? (parseFloat(val)||0) : val;
+  refreshPurchSub(it, ia);
+  recalc();
+}
+function updPurchTier(id, ti, field, val, ia) {
+  ia = !!ia;
+  const st = _pst(ia);
+  const it = st.purchItems.find(it=>it.id===id);
+  if (!it) return;
+  it.tiers[ti][field] = field==='qty' ? (parseInt(val)||null) : (parseFloat(val)||0);
+  refreshPurchSub(it, ia);
+  recalc();
+}
+function addPurchTier(id, ia) {
+  ia = !!ia;
+  const st = _pst(ia);
+  const it = st.purchItems.find(it=>it.id===id);
+  if (!it) return;
+  if (!it.tiers) it.tiers = [];
+  it.tiers.push({qty:null, price:0});
+  renderPurchItems(ia);
+}
+function delPurchTier(id, ti, ia) {
+  ia = !!ia;
+  const st = _pst(ia);
+  const it = st.purchItems.find(it=>it.id===id);
+  if (!it) return;
+  if (it.tiers.length > 1) it.tiers.splice(ti,1);
+  else it.tiers[0] = {qty:null, price:0};
+  renderPurchItems(ia);
+}
+function refreshPurchSub(it, ia) {
+  const st = _pst(ia);
   const aqty = G.activeQty || (G.qtys.length ? Math.min(...G.qtys) : 1);
-  const lineTotal = (it.unitPrice||0)*(it.qtyPerPc||1);
+  const lineTotal = purchUnit(it, aqty) * (it.qtyPerPc||1);
   const sub = it.amort ? r2(lineTotal/aqty) : r2(lineTotal);
-  const subEl = document.getElementById(_psid(ia, id));
+  const subEl = document.getElementById(_psid(ia, it.id));
   if (subEl) subEl.innerHTML = it.amort
     ? `NT$ ${sub.toLocaleString('zh-TW',{minimumFractionDigits:1,maximumFractionDigits:1})} <span style="font-weight:400;color:var(--tx3);font-size:9.5px;">@${aqty}pc</span>`
     : `NT$ ${sub.toLocaleString('zh-TW',{minimumFractionDigits:1,maximumFractionDigits:1})}`;
+  const calcEl = document.getElementById(_pcid(ia, it.id));
+  if (calcEl) calcEl.innerHTML = purchCalcText(it, ia);
   const grandTotal = r2(st.purchItems.reduce((s,it2) => {
-    const lt = (it2.unitPrice||0)*(it2.qtyPerPc||1);
+    const lt = purchUnit(it2, aqty) * (it2.qtyPerPc||1);
     return s + (it2.amort ? lt/aqty : lt);
   }, 0));
   const totalEl = _pel(ia, 'total');
@@ -1472,7 +1588,6 @@ function updPurchItem(id, field, val, ia) {
     totalEl.style.display = 'block';
     totalEl.innerHTML = `外購合計 @ ${aqty} pcs：<strong>NT$ ${grandTotal.toLocaleString('zh-TW',{minimumFractionDigits:1,maximumFractionDigits:1})} / pc</strong>`;
   }
-  recalc();
 }
 
 // ══════════════════════════════════════════════════════
@@ -1493,9 +1608,10 @@ function setMode(m) {
 function addWorkpiece() {
   const id = A.nextWpId++;
   A.workpieces.push({
-    id, name: '', partNo: '', material: '', surface: '',
+    id, partNo: '', revision: '', material: '', surface: '',
     qtyPerUnit: 1, collapsed: false, procs: [], nextId: 1,
     matTiers: [{qty:null, price:0}], matSetupQty: 0,
+    matMode:'perpc', barTiers:[{qty:null,price:0}], piecesPerBar:0,
   });
   renderAssembly(); recalc();
 }
@@ -1514,7 +1630,8 @@ function toggleWpCollapse(id) {
 function updWp(id, field, val) {
   const wp = A.workpieces.find(w=>w.id===id);
   if (!wp) return;
-  wp[field] = (field==='qtyPerUnit'||field==='matSetupQty') ? (parseFloat(val)||0) : val;
+  const numFields = ['qtyPerUnit','matSetupQty','barPrice','piecesPerBar'];
+  wp[field] = numFields.includes(field) ? (parseFloat(val)||0) : val;
   recalc();
 }
 
@@ -1538,10 +1655,10 @@ function renderAssembly() {
       <div class="asm-col-hd">
         <span class="wp-label">WP${String(idx+1).padStart(2,'0')}</span>
         <div class="wp-inputs" style="flex:1;">
-          <input type="text" class="wp-name" placeholder="料號" value="${escH(wp.name||'')}"
-            oninput="updWp(${wp.id},'name',this.value)">
-          <input type="text" class="wp-partno" placeholder="版本" value="${escH(wp.partNo||'')}"
+          <input type="text" class="wp-name" placeholder="料號" value="${escH(wp.partNo||'')}"
             oninput="updWp(${wp.id},'partNo',this.value)">
+          <input type="text" class="wp-partno" placeholder="版本" value="${escH(wp.revision||'')}"
+            oninput="updWp(${wp.id},'revision',this.value)">
           <input type="text" class="wp-mat" placeholder="材料" value="${escH(wp.material||'')}"
             oninput="updWp(${wp.id},'material',this.value)">
           <span class="wp-qty-lbl">×</span>
@@ -1554,6 +1671,7 @@ function renderAssembly() {
     </div>`).join('');
 
   const matCells = A.workpieces.map(wp => {
+    const bar = wp.matMode === 'bar';
     const matTiersHtml = wp.matTiers.map((t,i) => `
       <div class="tier-row">
         <input type="number" placeholder="數量 pcs" value="${t.qty||''}" min="1"
@@ -1562,9 +1680,29 @@ function renderAssembly() {
           oninput="updMatTier(${i},'price',this.value,${wp.id})">
         <button class="tier-del" onclick="delMatTier(${i},${wp.id})">×</button>
       </div>`).join('');
-    return `<div class="asm-col asm-col-body">
+    const barTiersHtml = (wp.barTiers||[]).map((t,i) => `
+      <div class="tier-row">
+        <input type="number" placeholder="支數" value="${t.qty||''}" min="1"
+          oninput="updBarTier(${i},'qty',this.value,${wp.id})">
+        <input type="number" placeholder="NTD / 支" value="${t.price||''}" min="0"
+          oninput="updBarTier(${i},'price',this.value,${wp.id})">
+        <button class="tier-del" onclick="delBarTier(${i},${wp.id})">×</button>
+      </div>`).join('');
+    const matBody = bar ? `
+      <div class="ff" style="margin-bottom:8px;"><label>一支出數 (pcs/支)</label>
+        <input type="number" value="${wp.piecesPerBar||''}" min="0" step="1" placeholder="3"
+          oninput="updWp(${wp.id},'piecesPerBar',this.value)"></div>
+      <label style="font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px;">整支單價級距 (依支數)</label>
+      <div class="tier-rows" id="wp${wp.id}_barTierList">${barTiersHtml}</div>
+      <button class="add-tier" onclick="addBarTier(${wp.id})" style="margin-top:5px;">＋ 支數級距</button>` : `
       <div class="tier-rows" id="wp${wp.id}_matTierList">${matTiersHtml}</div>
-      <button class="add-tier" onclick="addMatTier(${wp.id})" style="margin-top:5px;">＋ 新增級距</button>
+      <button class="add-tier" onclick="addMatTier(${wp.id})" style="margin-top:5px;">＋ 新增級距</button>`;
+    return `<div class="asm-col asm-col-body">
+      <div class="type-sw" style="margin-bottom:8px;">
+        <button class="${bar?'':'on-in'}" onclick="setMatMode('perpc',${wp.id})">每件單價</button>
+        <button class="${bar?'on-in':''}" onclick="setMatMode('bar',${wp.id})">圓棒切割</button>
+      </div>
+      ${matBody}
       <div style="margin-top:8px;display:flex;align-items:center;gap:7px;">
         <label style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.7px;white-space:nowrap;">架機批量</label>
         <input type="number" id="wp${wp.id}_matSetupQty" value="${wp.matSetupQty||''}" min="0" step="1"
@@ -1573,6 +1711,7 @@ function renderAssembly() {
           oninput="updWp(${wp.id},'matSetupQty',this.value)">
         <span style="font-size:10px;color:var(--tx3);">pcs</span>
       </div>
+      <div class="note green" id="wp${wp.id}_matHint" style="margin-top:6px;font-size:10px;">—</div>
     </div>`;
   }).join('');
 
@@ -1612,17 +1751,96 @@ function getTierPrice(tiers, qty) {
   return p;
 }
 
+// 外購件單價：依「實際採購數量」查級距
+// 固定/件 → 訂單量 × 用量；批次攤提 → 用量本身(整批量)
+function purchUnit(it, orderQty) {
+  const usage = it.qtyPerPc || 1;
+  return getTierPrice(it.tiers, it.amort ? usage : (orderQty || 0) * usage);
+}
+
+// 每件材料成本 — 支援「每件單價(級距)」與「圓棒切割」兩種模式
+// qtyForTier: 查級距用的數量；pieceQty: 實際訂單件數（組合件 = 訂單×每組用量）
+function matCostPerPiece(st, qtyForTier, pieceQty) {
+  const setup = st.matSetupQty || 0;
+  if (st.matMode === 'bar') {
+    const perBar = st.piecesPerBar || 0;
+    if (perBar <= 0 || pieceQty <= 0) return 0;
+    const demand = pieceQty + setup;            // 需求件數 = 訂單量 + 架機量
+    const bars = Math.ceil(demand / perBar);    // 無條件進位：圓棒只能整支買
+    const barPrice = getTierPrice(st.barTiers, bars);  // 依支數查整支單價
+    if (barPrice <= 0) return 0;
+    return r2(bars * barPrice / demand);        // 攤提分母 = 需求件數
+  }
+  const unitPrice = getTierPrice(st.matTiers, qtyForTier);
+  return (setup > 0 && pieceQty > 0)
+    ? r2((pieceQty + setup) * unitPrice / pieceQty)
+    : unitPrice;
+}
+
+function setMatMode(mode, wpId) {
+  const st = _st(wpId);
+  if (!st) return;
+  st.matMode = mode;
+  if (wpId) { renderAssembly(); }
+  else { applyMatModeUI(); }
+  recalc();
+}
+
+function applyMatModeUI() {
+  const btnP = document.getElementById('matModeBtnPerpc');
+  if (!btnP) return;
+  const bar = S.matMode === 'bar';
+  btnP.className = bar ? '' : 'on-in';
+  document.getElementById('matModeBtnBar').className = bar ? 'on-in' : '';
+  document.getElementById('matPerpcSection').style.display = bar ? 'none' : '';
+  document.getElementById('matBarSection').style.display   = bar ? '' : 'none';
+  document.getElementById('piecesPerBar').value = S.piecesPerBar || '';
+  renderBarTiers(null);
+  updateBarHint();
+  updateMatHintPerpc();
+}
+
+function updateBarHint() {
+  const el = document.getElementById('barHint');
+  if (!el) return;
+  const q = G.activeQty || (G.qtys.length ? Math.min(...G.qtys) : 0);
+  const setup = S.matSetupQty || 0, perBar = S.piecesPerBar || 0;
+  if (perBar <= 0 || q <= 0) {
+    el.innerHTML = '輸入一支出數與整支單價後，這裡會顯示支數試算';
+    return;
+  }
+  const demand = q + setup;
+  const bars = Math.ceil(demand / perBar);
+  const price = getTierPrice(S.barTiers, bars);
+  if (price <= 0) { el.innerHTML = '請填整支單價級距'; return; }
+  const total = bars * price;
+  const perPc = r2(total / demand);
+  el.innerHTML = `@ ${q} pcs：需求 ${demand} 件（訂 ${q} + 架機 ${setup}）→ <strong>${bars} 支</strong> × NT$${price.toLocaleString()}/支 = NT$${total.toLocaleString()} → 每件 <strong>NT$${perPc.toLocaleString()}</strong>（÷${demand}）`;
+}
+
+// 單工件「每件單價」模式的每件材料成本算式
+function updateMatHintPerpc() {
+  const el = document.getElementById('matHintPerpc');
+  if (!el) return;
+  const q = G.activeQty || (G.qtys.length ? Math.min(...G.qtys) : 0);
+  const setup = S.matSetupQty || 0;
+  const unit = q > 0 ? getTierPrice(S.matTiers, q) : 0;
+  if (q <= 0 || unit <= 0) { el.innerHTML = '輸入材料級距單價後，這裡會顯示每件成本試算'; return; }
+  if (setup > 0) {
+    const perPc = r2((q + setup) * unit / q);
+    el.innerHTML = `@ ${q} pcs：(數量 ${q} + 架機 ${setup}) × NT$${unit.toLocaleString()} ÷ ${q} = 每件 <strong>NT$${perPc.toLocaleString()}</strong>`;
+  } else {
+    el.innerHTML = `@ ${q} pcs：單價 <strong>NT$${unit.toLocaleString()}</strong> / 件（無架機批量）`;
+  }
+}
+
 function calcQty(qty, tab) {
   tab = tab || S;
   const er = parseFloat(document.getElementById('exchangeRate').value) || 30;
-  const matSetupQty = tab.matSetupQty || 0;
-  const matUnitPrice = getTierPrice(tab.matTiers, qty);
-  const mat = (matSetupQty > 0 && qty > 0)
-    ? r2((qty + matSetupQty) * matUnitPrice / qty)
-    : matUnitPrice;
+  const mat = matCostPerPiece(tab, qty, qty);
 
   const pur = r2(tab.purchItems.reduce((s,it) => {
-    const lt = (it.unitPrice||0)*(it.qtyPerPc||1);
+    const lt = purchUnit(it, qty)*(it.qtyPerPc||1);
     return s + (it.amort ? (qty > 0 ? lt/qty : 0) : lt);
   }, 0));
 
@@ -1691,7 +1909,7 @@ function costBreakdown(r, totalLabel, orderLabel) {
   return `<div class="cost-breakdown">
     <div class="cost-breakdown-head">
       <span>成本拆解 / Cost Breakdown</span>
-      <span class="cost-breakdown-unit">NTD / unit</span>
+      <span class="cost-breakdown-unit">NTD · USD / unit (匯率 ${r.er})</span>
     </div>
     <div class="cost-list">
       ${items.map(i => {
@@ -1702,12 +1920,12 @@ function costBreakdown(r, totalLabel, orderLabel) {
             <div class="cost-track"><div class="cost-fill ${i.cls}" style="width:${pct.toFixed(1)}%"></div></div>
             <span class="cost-pct">${pct.toFixed(1)}%</span>
           </div>
-          <div class="cost-amount">NT$ ${ntd(i.val)}</div>
+          <div class="cost-amount">NT$ ${ntd(i.val)}<span class="cost-amount-usd">US$ ${(i.val/r.er).toFixed(2)}</span></div>
         </div>`;
       }).join('')}
       <div class="cost-line total">
         <div class="cost-name"><strong>${totalLabel}</strong><span>Total cost</span></div>
-        <div class="cost-amount">NT$ ${ntd(r.total)}</div>
+        <div class="cost-amount">NT$ ${ntd(r.total)}<span class="cost-amount-usd">US$ ${(r.total/r.er).toFixed(2)}</span></div>
       </div>
     </div>
     <div class="quote-meta-grid">
@@ -1727,11 +1945,7 @@ function calcAssemblySet(qty) {
   for (const wp of A.workpieces) {
     const N = wp.qtyPerUnit || 1;
     const pieceQty = qty * N;
-    const matSetupQty = wp.matSetupQty || 0;
-    const matUnitPrice = getTierPrice(wp.matTiers, qty);
-    const matPerPc = (matSetupQty > 0 && pieceQty > 0)
-      ? r2((pieceQty + matSetupQty) * matUnitPrice / pieceQty)
-      : matUnitPrice;
+    const matPerPc = matCostPerPiece(wp, pieceQty, pieceQty);   // 級距用實際件數(組數×N)查
     matPerSet += matPerPc * N;
     for (const proc of wp.procs) {
       if (proc.type === 'inhouse') {
@@ -1742,13 +1956,13 @@ function calcAssemblySet(qty) {
           if (sh > 0 && m.setupHrUSD > 0) setupPerSet += (sh * m.setupHrUSD * er) / qty;
         }
       } else {
-        outsourcePerSet += getTierPrice(proc.tiers, qty) * N;
+        outsourcePerSet += getTierPrice(proc.tiers, pieceQty) * N;   // 級距用實際件數(組數×N)查
       }
     }
   }
 
   const purPerSet = r2(A.purchItems.reduce((s,it) => {
-    const lt = (it.unitPrice||0)*(it.qtyPerPc||1);
+    const lt = purchUnit(it, qty)*(it.qtyPerPc||1);
     return s + (it.amort ? (qty > 0 ? lt/qty : 0) : lt);
   }, 0));
 
@@ -1774,6 +1988,7 @@ function calcAssemblySet(qty) {
 
 function recalc() {
   renderPriceStrip();
+  if (MODE === 'single') { updateBarHint(); updateMatHintPerpc(); }
   if (MODE === 'assembly') {
     const rb = document.getElementById('resultsBody');
     const wpCount    = A.workpieces.length;
@@ -1790,17 +2005,26 @@ function recalc() {
     const cu = document.getElementById('customer').value || '—';
     const r  = calcAssemblySet(G.activeQty);
 
-    // Update WP total cells in parallel grid
+    // Update WP total cells — 個別工件口徑：材料(含架機攤提) + 廠內(加工+設定費) + 廠外
+    const erA = parseFloat(document.getElementById('exchangeRate').value) || 30;
     const wpCosts = A.workpieces.map(wp => {
       const N = wp.qtyPerUnit || 1;
-      const mat = r2(getTierPrice(wp.matTiers, G.activeQty) * N);
-      const inh = r2(wp.procs.filter(p=>p.type==='inhouse').reduce((s,p)=>{
-        const m = MACH_MAP[p.machId]; return s + (p.timeMin||0)*(m?m.perMin:0);
-      },0) * N);
-      const out = r2(wp.procs.filter(p=>p.type==='outsource').reduce((s,p)=>{
-        return s + getTierPrice(p.tiers, G.activeQty) * N;
-      },0));
-      return r2(mat + inh + out);
+      const pieceQty = G.activeQty * N;
+      const mat = r2(matCostPerPiece(wp, pieceQty, pieceQty) * N);   // 兩模式一致，含架機攤提
+      let inh = 0, setup = 0, out = 0;
+      for (const p of wp.procs) {
+        if (p.type === 'inhouse') {
+          const m = MACH_MAP[p.machId];
+          if (m) {
+            inh += (p.timeMin||0) * m.perMin * N;
+            const sh = p.setupHrs || 0;
+            if (sh > 0 && m.setupHrUSD > 0) setup += (sh * m.setupHrUSD * erA) / G.activeQty;
+          }
+        } else {
+          out += getTierPrice(p.tiers, pieceQty) * N;
+        }
+      }
+      return r2(mat + inh + setup + out);
     });
     const totalWpCost = wpCosts.reduce((a,b)=>a+b,0) || 1;
     A.workpieces.forEach((wp, idx) => {
@@ -1808,6 +2032,29 @@ function recalc() {
       if (el) el.textContent = `NT$ ${ntd(wpCosts[idx])}`;
       const lbl = document.getElementById(`wpqtylbl_${wp.id}`);
       if (lbl) lbl.textContent = `WP${String(idx+1).padStart(2,'0')} 合計 @ ${G.activeQty} sets`;
+      const bh = document.getElementById(`wp${wp.id}_matHint`);
+      if (bh) {
+        const N = wp.qtyPerUnit || 1, q = G.activeQty;
+        const setup = wp.matSetupQty || 0;
+        const pieceQty = q * N, demand = pieceQty + setup;
+        if (wp.matMode === 'bar') {
+          const perBar = wp.piecesPerBar || 0;
+          const bars = perBar > 0 ? Math.ceil(demand/perBar) : 0;
+          const price = getTierPrice(wp.barTiers, bars);
+          bh.innerHTML = (perBar > 0 && price > 0 && pieceQty > 0)
+            ? `@${q}組：需求 ${demand} 件 → <strong>${bars} 支</strong> × NT$${price.toLocaleString()}/支 → 每件 <strong>NT$${r2(bars*price/demand).toLocaleString()}</strong>（÷${demand}）`
+            : '輸入一支出數與整支單價級距';
+        } else {
+          const unit = getTierPrice(wp.matTiers, pieceQty);
+          if (unit > 0 && pieceQty > 0) {
+            bh.innerHTML = setup > 0
+              ? `@${q}組：件數 ${pieceQty}（${q}×${N}）+架機 ${setup} → (${pieceQty}+${setup})×NT$${unit.toLocaleString()}÷${pieceQty} = 每件 <strong>NT$${r2((pieceQty+setup)*unit/pieceQty).toLocaleString()}</strong>`
+              : `@${q}組：件數 ${pieceQty}（${q}×${N}）→ 每件 <strong>NT$${unit.toLocaleString()}</strong>`;
+          } else {
+            bh.innerHTML = '輸入材料級距單價';
+          }
+        }
+      }
     });
 
     const wpBreakdown = A.workpieces.length > 1 ? A.workpieces.map((wp, idx) => {
@@ -1815,7 +2062,7 @@ function recalc() {
       const pct = wpCosts[idx] / totalWpCost * 100;
       return `<tr>
         <td style="color:var(--acc);font-weight:700;white-space:nowrap;">WP${String(idx+1).padStart(2,'0')}</td>
-        <td>${wp.name||'—'} ×${N}</td>
+        <td>${escH(wp.partNo||'—')} ×${N}</td>
         <td>
           <div style="display:flex;align-items:center;gap:6px;">
             <div style="flex:1;height:4px;background:rgba(255,255,255,.08);border-radius:2px;min-width:60px;">
@@ -1904,13 +2151,15 @@ function refreshPurchDisplay(ia) {
   if (!st.purchItems.length) return;
   let grand = 0;
   st.purchItems.forEach(it => {
-    const lt  = (it.unitPrice||0)*(it.qtyPerPc||1);
+    const lt  = purchUnit(it, aqty)*(it.qtyPerPc||1);
     const sub = it.amort ? r2(lt/aqty) : r2(lt);
     grand += sub;
     const el = document.getElementById(_psid(ia, it.id));
     if (el) el.innerHTML = it.amort
       ? `NT$ ${sub.toLocaleString('zh-TW',{minimumFractionDigits:1,maximumFractionDigits:1})} <span style="font-weight:400;color:var(--tx3);font-size:9.5px;">@${aqty}pc</span>`
       : `NT$ ${sub.toLocaleString('zh-TW',{minimumFractionDigits:1,maximumFractionDigits:1})}`;
+    const calcEl = document.getElementById(_pcid(ia, it.id));
+    if (calcEl) calcEl.innerHTML = purchCalcText(it, ia);
   });
   const totalEl = _pel(ia,'total');
   if (totalEl) {
@@ -1996,17 +2245,37 @@ function buildTabRows(tab, qtys, rfqNo, cu, er, modeStr, diffLbl, today) {
     }
   });
   sec('材料成本 Material Cost');
-  rows.push(['數量 (pcs)','NTD / pc']);
-  tab.matTiers.filter(t=>t.price>0).forEach(t=>rows.push([t.qty?`${t.qty} pcs`:'固定單價',t.price]));
-  if (tab.matSetupQty > 0) kv('採購批量說明',`訂單量不足 ${tab.matSetupQty} pcs 時仍按此批量計料`);
+  if (tab.matMode === 'bar') {
+    kv('計價方式', '圓棒／切割材（依支數級距）');
+    kv('一支出數 (pcs/支)', tab.piecesPerBar || 0);
+    kv('架機數量 (pcs)', tab.matSetupQty || 0);
+    const _barTierStr = (tab.barTiers||[]).filter(t=>t.price>0).map(t=>t.qty?`≥${t.qty}支:NT$${t.price}`:`固定:NT$${t.price}`).join(' / ');
+    kv('整支單價級距', _barTierStr || '—');
+    rows.push(['數量(pcs)','需求件數','需要支數','整支單價(NTD/支)','材料總額(NTD)','每件材料(NTD/pc)']);
+    const _pb = tab.piecesPerBar || 0;
+    qtys.forEach(q => {
+      const demand = q + (tab.matSetupQty || 0);
+      if (_pb > 0) {
+        const bars = Math.ceil(demand/_pb);
+        const bp = getTierPrice(tab.barTiers, bars);
+        if (bp > 0) rows.push([q, demand, bars, bp, bars*bp, r2(bars*bp/demand)]);
+        else rows.push([q, demand, bars, '—', '—', '—']);
+      } else rows.push([q, demand, '—', '—', '—', '—']);
+    });
+  } else {
+    rows.push(['數量 (pcs)','NTD / pc']);
+    tab.matTiers.filter(t=>t.price>0).forEach(t=>rows.push([t.qty?`${t.qty} pcs`:'固定單價',t.price]));
+    if (tab.matSetupQty > 0) kv('採購批量說明',`訂單量不足 ${tab.matSetupQty} pcs 時仍按此批量計料`);
+  }
   sec('外購物料清單 Purchased Parts');
   if (tab.purchItems.length) {
-    rows.push(['品項名稱','單價 (NTD)','用量/件','計算方式',...qtys.map(q=>`小計@${q}pc (NTD/pc)`)]);
+    rows.push(['品項名稱','單價級距','用量/件','計算方式',...qtys.map(q=>`小計@${q}pc (NTD/pc)`)]);
     tab.purchItems.forEach(it=>{
       const md=it.amort?'批次攤提 (÷訂單量)':'固定/件';
-      rows.push([it.name||'',it.unitPrice||0,it.qtyPerPc||1,md,...qtys.map(q=>{const lt=(it.unitPrice||0)*(it.qtyPerPc||1);return r2(it.amort?lt/q:lt);})]);
+      const tierStr=(it.tiers||[]).filter(t=>t.price>0).map(t=>t.qty?`≥${t.qty}:${t.price}`:`固定:${t.price}`).join(' / ');
+      rows.push([it.name||'',tierStr,it.qtyPerPc||1,md,...qtys.map(q=>{const lt=purchUnit(it,q)*(it.qtyPerPc||1);return r2(it.amort?lt/q:lt);})]);
     });
-    qtys.forEach(q=>{const pt=r2(tab.purchItems.reduce((s,it)=>{const lt=(it.unitPrice||0)*(it.qtyPerPc||1);return s+(it.amort?lt/q:lt);},0));kv(`外購合計@${q}pcs`,pt);});
+    qtys.forEach(q=>{const pt=r2(tab.purchItems.reduce((s,it)=>{const lt=purchUnit(it,q)*(it.qtyPerPc||1);return s+(it.amort?lt/q:lt);},0));kv(`外購合計@${q}pcs`,pt);});
   } else { rows.push(['（無外購品項）']); }
   sec('刀具 / 治具 / 一次性費用 One-time Costs');
   kv('刀具費 Tooling (NTD)', tab.ot_knife||0);
@@ -2035,7 +2304,7 @@ function buildAssemblyRows(qtys, rfqNo, cu, er, diffLbl, today) {
   rows.push(['=== 工件明細 ===']);
   A.workpieces.forEach(wp => {
     rows.push([]);
-    rows.push([`WP${wp.id} — ${wp.partNo||'(未填料號)'}`, `材料: ${wp.material||'—'}`, `每組用量: ${wp.qtyPerUnit||1} pcs/set`]);
+    rows.push([`WP${wp.id} — ${wp.partNo||'(未填料號)'}${wp.revision?(' / Rev '+wp.revision):''}`, `材料: ${wp.material||'—'}`, `每組用量: ${wp.qtyPerUnit||1} pcs/set`]);
     if (wp.procs.length) {
       rows.push(['  製程', '機台', '加工時間', 'NT$/pc']);
       wp.procs.forEach((p, i) => {
@@ -2051,8 +2320,13 @@ function buildAssemblyRows(qtys, rfqNo, cu, er, diffLbl, today) {
     } else {
       rows.push(['  (無製程)']);
     }
-    const matStr = (wp.matTiers||[]).filter(t=>t.price>0).map(t=>t.qty?`${t.qty}pcs: NT$${t.price}`:`固定: NT$${t.price}`).join(' / ');
-    if (matStr) rows.push(['  材料成本', matStr]);
+    if (wp.matMode === 'bar') {
+      const _bt = (wp.barTiers||[]).filter(t=>t.price>0).map(t=>t.qty?`≥${t.qty}支:NT$${t.price}`:`固定:NT$${t.price}`).join(' / ');
+      rows.push(['  材料(圓棒切割)', `一支 ${wp.piecesPerBar||0} 件 / 整支單價(依支數): ${_bt||'—'}` + (wp.matSetupQty?` / 架機 ${wp.matSetupQty} 件`:'')]);
+    } else {
+      const matStr = (wp.matTiers||[]).filter(t=>t.price>0).map(t=>t.qty?`${t.qty}pcs: NT$${t.price}`:`固定: NT$${t.price}`).join(' / ');
+      if (matStr) rows.push(['  材料成本', matStr]);
+    }
   });
   rows.push([]);
   rows.push(['=== 各級距報價彙總 ===']);
@@ -2149,7 +2423,9 @@ function saveCalc() {
   const rfqNo   = document.getElementById('rfqNo').value.trim();
   const customer = document.getElementById('customer').value.trim();
   const san2 = s => s.replace(/[\\/:*?"<>|\s]/g, '_');
-  const parts = [rfqNo, customer, S.partNo, S.revision].filter(Boolean).map(san2);
+  // 與 quotation 的 revForFilename 完全一致：清除標點、轉大寫、補 REV 前綴
+  const revFn = s => { const v = String(s||'').trim().replace(/[\s/\\:*?"<>|,.'()]/g,'').toUpperCase(); return v ? (v.startsWith('REV') ? v : 'REV'+v) : ''; };
+  const parts = [rfqNo, customer, S.partNo, revFn(S.revision)].filter(Boolean).map(san2);
   const filename = (parts.join('_') || 'RFQ_quote') + '.json';
 
   const data = {
@@ -2190,7 +2466,8 @@ function exportToQuotation() {
     activeTabs.forEach(tab => {
       items.push({
         partNo: tab.partNo || '',
-        productName: tab.partNo + (tab.revision ? ' Rev.' + tab.revision : ''),
+        revision: tab.revision || '',
+        productName: tab.partNo || '',
         material: [tab.material, tab.surface].filter(Boolean).join(' / '),
         leadTime: '',
         qtys: G.qtys.map(q => {
@@ -2209,7 +2486,8 @@ function exportToQuotation() {
       return { q, p: r.priceUSD };
     });
     items.push({
-      partNo: (A.workpieces[0] && A.workpieces[0].partNo) || '',
+      partNo: document.getElementById('partNo').value.trim() || (A.workpieces[0] && A.workpieces[0].partNo) || '',
+      revision: document.getElementById('revision').value.trim() || '',
       productName: 'Assembly Set',
       material: A.workpieces.map(w => w.material).filter(Boolean).join(' / '),
       leadTime: '',
@@ -2293,6 +2571,14 @@ function loadCalc() {
           TABS=[tab]; activeTabId=1; nextTabId=2; S=tab;
           A = data.A || {workpieces:[],nextWpId:1,purchItems:[],nextPurchId:1};
         }
+        const _migBar = o => { if (!o.barTiers) o.barTiers = (o.barPrice>0)?[{qty:null,price:o.barPrice}]:[{qty:null,price:0}]; delete o.barPrice; };
+        const _migPurch = list => (list||[]).forEach(it => { if (!it.tiers) it.tiers = (it.unitPrice>0)?[{qty:null,price:it.unitPrice}]:[{qty:null,price:0}]; delete it.unitPrice; });
+        TABS.forEach(t => { if (!t.matMode) t.matMode = 'perpc'; _migBar(t); t.piecesPerBar = t.piecesPerBar || 0; _migPurch(t.purchItems); });
+        (A.workpieces || []).forEach(w => {
+          if (!('revision' in w)) { w.revision = w.partNo || ''; w.partNo = w.name || ''; delete w.name; }
+          if (!w.matMode) w.matMode = 'perpc'; _migBar(w); w.piecesPerBar = w.piecesPerBar || 0;
+        });
+        _migPurch(A.purchItems);
         loadTabToDOM(S);
         setMode(data.mode || 'single');
         renderTabBar(); renderQtys(); renderMatTiers(); renderProcs(); renderPurchItems(); renderPurchItems(true);
@@ -2339,6 +2625,7 @@ document.getElementById('newQty').addEventListener('keydown', e=>{ if(e.key==='E
 // CUSTOMER LIST
 // ══════════════════════════════════════════════════════
 const CUSTOMERS=[
+  {name:'Abbott Laboratories',                code:'FAB02'},
   {name:'Abbott Molecular',                   code:'FAB03'},
   {name:'Abbott POC',                         code:'FAB01'},
   {name:'ADLINK (Boston Dynamics)',            code:'FAD01'},
@@ -2400,6 +2687,7 @@ renderTabBar();
 renderQtys();
 renderProcs();
 renderMatTiers();
+applyMatModeUI();
 renderPurchItems();
 renderPurchItems(true);
 </script>

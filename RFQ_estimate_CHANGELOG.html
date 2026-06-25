@@ -66,10 +66,59 @@ code{background:#132030;border:1px solid #1C3050;padding:1px 6px;border-radius:3
 
   <div class="body">
 
+    <!-- V3.6 -->
+    <div class="version-block">
+      <div class="version-tag latest">V3.6 <span class="date">2026-06-24</span></div>
+      <ul class="change-list">
+        <li class="change-item feat">
+          <span class="tag tag-feat">FEAT</span>
+          <div><strong>圓棒／切割材材料計價模式</strong>：材料區可切換「每件單價 / 圓棒切割」。圓棒模式輸入「一支出數」與「整支單價（支援依支數級距）」，系統依「需求件數 = 詢價量 + 架機量」<strong>無條件進位</strong>算出需要幾支，攤提分母為需求件數。單工件與組合件皆支援，並即時顯示支數試算（如 <code>需求 200 件 → 67 支 × NT$1000 → 每件 NT$…</code>）。</div>
+        </li>
+        <li class="change-item feat">
+          <span class="tag tag-feat">FEAT</span>
+          <div><strong>外購件數量級距（依實際採購數量）</strong>：外購品項單價改為可設數量級距，並依<strong>實際採購數量</strong>查價——固定/件 = 訂單量 × 用量；批次攤提 = 整批用量。單工件與組合件外購料皆適用。</div>
+        </li>
+        <li class="change-item feat">
+          <span class="tag tag-feat">FEAT</span>
+          <div><strong>成本拆解雙幣別顯示</strong>：右側成本拆解每一列（含總成本）於台幣下方加顯美金（NTD ÷ 匯率），表頭標示換算匯率。</div>
+        </li>
+        <li class="change-item feat">
+          <span class="tag tag-feat">FEAT</span>
+          <div><strong>資料維護</strong>：客戶清單新增 <code>Abbott Laboratories（FAB02）</code>；廠外製程預設新增「外發包裝」「外發組裝」。</div>
+        </li>
+        <li class="change-item fix">
+          <span class="tag tag-fix">FIX</span>
+          <div><strong>組合件工件「料號 / 版本」欄位錯置</strong>：原本「版本」輸入存進 <code>partNo</code>、「料號」存進 <code>name</code>，導致匯出至報價單 / Excel 把版本當成料號。現改為 料號 → <code>partNo</code>、版本 → 新增 <code>revision</code>，並修正匯出、側欄拆解與 Excel；載入舊檔自動遷移欄位。</div>
+        </li>
+        <li class="change-item fix">
+          <span class="tag tag-fix">FIX</span>
+          <div><strong>組合件級距以「組數」查價</strong>：材料、廠外、外購的數量級距改用<strong>實際件數（組數 × 每組用量 N）</strong>查價，修正「每組用量 &gt; 1」時抓錯級距、報價偏高的問題（例：N=4、50 組 → 實際 200 件 → 正確命中 ≥100 級距）。單工件不受影響。</div>
+        </li>
+        <li class="change-item">
+          <span class="tag tag-chg">CHG</span>
+          <div><strong>WP 合計改為「個別工件」口徑</strong>：各工件合計 = 材料（含架機攤提）+ 廠內（加工 + 機台設定費）+ 廠外；外購 / 一次性費用 / 佣金只計入總成本。對帳一致：<code>Σ WP 合計 + 外購 + 一次性 + 佣金 = 總成本/組</code>。</div>
+        </li>
+        <li class="change-item">
+          <span class="tag tag-chg">CHG</span>
+          <div><strong>每件單價模式新增計算公式提示</strong>：組合件「每件單價」模式比照圓棒模式，於材料區顯示每件材料的計算式（含架機批量攤提）。</div>
+        </li>
+      </ul>
+    </div>
+
+    <hr class="divider">
+
     <!-- V3.5 -->
     <div class="version-block">
-      <div class="version-tag latest">V3.5 <span class="date">2026-05-29</span></div>
+      <div class="version-tag">V3.5 <span class="date">2026-05-29 · 2026-06-18 更新</span></div>
       <ul class="change-list">
+        <li class="change-item fix">
+          <span class="tag tag-fix">FIX</span>
+          <div><strong>匯出至報價單未帶入版次（REV）</strong>：「📋 匯出至報價單」產生的 JSON 過去把版次併入品名（如 <code>M10848 Rev.B</code>），未輸出獨立的 <code>revision</code> 欄位，導致匯入 Quotation Tool 後 REV 欄位空白。現已改為輸出獨立 <code>revision</code> 欄位，品名不再重複帶版次；組合件 Assembly Set 一併補上空白 <code>revision</code> 欄位。</div>
+        </li>
+        <li class="change-item">
+          <span class="tag tag-chg">CHG</span>
+          <div><strong>版次（REV）命名與 Quotation 對齊</strong>：儲存 JSON 的檔名版次處理改用與 Quotation Tool <code>revForFilename</code> 完全相同的規則（清除標點、轉大寫、自動補 <code>REV</code> 前綴）。版次欄位只需填 REV 後綴（如 <code>01</code> 或 <code>C</code>）：填 <code>01</code> → 檔名 <code>…_REV01.json</code>、報價單顯示 <code>REV.01</code>。輸入提示同步更新為「只填 REV 後綴」。</div>
+        </li>
         <li class="change-item">
           <span class="tag tag-chg">CHG</span>
           <div><strong>ACHB 深色高可讀版面更新</strong>：依 V3.5 draft 將 RFQ 介面升級為 ACHB 品牌色系，放大主要字級與輸入元件，單工件與組合件模式共用一致的視覺設計。</div>
